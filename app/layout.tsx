@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${inter.className} ${poppins.variable}`}>
+      <body className={`${poppins.className} ${poppins.variable}`}>
         <LanguageProvider>
           <ScriptLoader />
           {children}

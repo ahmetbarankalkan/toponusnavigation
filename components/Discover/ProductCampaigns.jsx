@@ -1,8 +1,85 @@
 'use client';
 
-import { Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, Heart } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProductCampaigns({ productRooms, onRoomSelect }) {
+  const { user, isAuthenticated } = useAuth();
+  const [favorites, setFavorites] = useState([]);
+  const [loadingFav, setLoadingFav] = useState({});
+
+  // Favorileri yükle
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchFavorites = async () => {
+        try {
+          const token = localStorage.getItem('user_token');
+          const res = await fetch('/api/favorites', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setFavorites(data.favorites || []);
+          }
+        } catch (err) {
+          console.error('Favori yükleme hatası:', err);
+        }
+      };
+      fetchFavorites();
+    }
+  }, [isAuthenticated, user]);
+
+  const handleFavoriteToggle = async (e, product, room) => {
+    e.stopPropagation(); // Kartın click eventini durdur
+    
+    if (!isAuthenticated) {
+      alert('Favorilere eklemek için lütfen giriş yapın.');
+      return;
+    }
+
+    const productId = product.id || product.room_id || product._id;
+    setLoadingFav(prev => ({ ...prev, [productId]: true }));
+
+    try {
+      const token = localStorage.getItem('user_token');
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          storeId: productId,
+          storeName: product.product_name || product.name || product.title,
+          type: 'product',
+          roomData: {
+            id: room.id,
+            name: room.name,
+            floor: room.floor
+          }
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        if (data.action === 'added') {
+          setFavorites(prev => [...prev, { storeId: productId }]);
+        } else {
+          setFavorites(prev => prev.filter(f => f.storeId !== productId));
+        }
+      }
+    } catch (error) {
+      console.error('Favori işlemi hatası:', error);
+    } finally {
+      setLoadingFav(prev => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const isProductFavorite = (productId) => {
+    return favorites.some(f => f.storeId === productId);
+  };
+
   // Eğer hiç ürün kampanyası yoksa, component'i gösterme
   if (productRooms.length === 0) {
     return null;
@@ -56,6 +133,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
                 const name = product.product_name || product.name || camp.title;
                 const image = product.image || camp.image;
                 const discount = camp.discountPercentage || camp.discount_percentage;
+                const productId = product.id || product.room_id || product._id;
                 
                 // Calculate discounted price if not present (from product price and discount)
                 let discountedPrice = camp.discounted_price;
@@ -67,11 +145,13 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
                   }
                 }
 
+                const isFav = isProductFavorite(productId);
+
                 return (
                   <div
                     key={campIdx}
                     onClick={() => onRoomSelect(room)}
-                    className="w-full h-[70px] bg-[#FFFFFF57] rounded-[24px] px-4 flex items-center justify-between border border-white/20 shadow-[0px_0px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-white/40 transition-all group"
+                    className="w-full h-[70px] bg-[#FFFFFF57] rounded-[24px] px-4 flex items-center justify-between border border-white/20 shadow-[0px_0px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-white/40 transition-all group relative"
                   >
                     <div className="flex items-center gap-4">
                       <div 
@@ -88,10 +168,24 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-4 pr-1">
+                    <div className="flex items-center gap-3 pr-1">
                       <span className="text-black text-[16px] font-bold font-poppins whitespace-nowrap">
                         {discountedPrice ? Math.round(discountedPrice) : (product.price || '0')} TL
                       </span>
+                      
+                      <button
+                        onClick={(e) => handleFavoriteToggle(e, product, room)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          isFav ? 'bg-red-50' : 'bg-white/50 hover:bg-white'
+                        } ${loadingFav[productId] ? 'animate-pulse' : ''}`}
+                      >
+                        <Heart 
+                          size={16} 
+                          className={`transition-colors ${
+                            isFav ? 'text-red-500 fill-red-500' : 'text-[#1B3349]'
+                          }`}
+                        />
+                      </button>
                     </div>
                   </div>
                 );
@@ -103,3 +197,4 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
     </div>
   );
 }
+
