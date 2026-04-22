@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import ProfilePanel from '@/components/Profile/ProfilePanel';
 import BottomNavbar from '@/components/Navigation/BottomNavbar';

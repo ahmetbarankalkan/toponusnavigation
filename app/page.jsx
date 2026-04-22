@@ -1,5 +1,5 @@
-// Force rebuild v2
 'use client';
+export const dynamic = 'force-dynamic';
 import React, {
   useEffect,
   useRef,
