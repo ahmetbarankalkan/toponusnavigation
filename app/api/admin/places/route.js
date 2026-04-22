@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 /**
  * Admin Places API
  * Yerler listesi için API

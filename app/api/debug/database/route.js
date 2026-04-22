@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 /**
  * Database Debug API
  * Database içeriğini kontrol etmek için

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // app/api/geojson/route.js
 import { NextResponse } from 'next/server';
 import fs from 'fs';
