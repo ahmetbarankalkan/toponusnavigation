@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
