@@ -2,7 +2,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import KioskMap from '@/components/Kiosk/KioskMap';
 import KioskSearchModal from '@/components/Kiosk/KioskSearchModal';
 import KioskRoutePlanner from '@/components/Kiosk/KioskRoutePlanner';
@@ -10,7 +10,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useGraphBuilder } from '@/hooks/useGraphBuilder';
 import { multiFloorDijkstra } from '@/utils/dijkstra';
 
-export default function KioskLocationPage() {
+function KioskLocationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { buildMultiFloorGraph } = useGraphBuilder();
@@ -285,5 +285,13 @@ export default function KioskLocationPage() {
         onSelectEnd={() => handleOpenSearchModal('end')}
       />
     </div>
+  );
+}
+
+export default function KioskLocationPage() {
+  return (
+    <Suspense fallback={null}>
+      <KioskLocationContent />
+    </Suspense>
   );
 }

@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic';
 import ProfilePanel from '@/components/Profile/ProfilePanel';
 import BottomNavbar from '@/components/Navigation/BottomNavbar';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
-const ProfilePage = () => {
+const ProfileContent = () => {
   const searchParams = useSearchParams();
   const [activeNavItem, setActiveNavItem] = useState(4); // Profil aktif
 
@@ -26,4 +26,10 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfileContent />
+    </Suspense>
+  );
+}

@@ -869,3 +869,11 @@ export default function KioskPage() {
     </>
   );
 }
+
+export default function KioskPage() {
+  return (
+    <Suspense fallback={null}>
+      <KioskContent />
+    </Suspense>
+  );
+}

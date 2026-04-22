@@ -148,7 +148,9 @@ import {
   Repeat2,
   Menu,
 } from 'lucide-react';
-export default function MapLibreMap() {
+function MapContent() {
+  // ... rest of the component
+
   // Hydration-safe mounting check - MUST be first
   const [isMounted, setIsMounted] = useState(false);
 
@@ -3018,5 +3020,13 @@ export default function MapLibreMap() {
         />
       )}
     </div>
+  );
+}
+
+export default function MapLibreMap() {
+  return (
+    <Suspense fallback={null}>
+      <MapContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,14 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavbar from '@/components/Navigation/BottomNavbar';
 import StoreDetailDesign from '@/components/Store/StoreDetailDesign';
 
-export default function FavoritesPage() {
+function FavoritesContent() {
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
@@ -498,5 +499,13 @@ export default function FavoritesPage() {
 
       <BottomNavbar activeNavItem={activeNavItem} setActiveNavItem={setActiveNavItem} searchParams={searchParams} />
     </div>
+  );
+}
+
+export default function FavoritesPage() {
+  return (
+    <Suspense fallback={null}>
+      <FavoritesContent />
+    </Suspense>
   );
 }
