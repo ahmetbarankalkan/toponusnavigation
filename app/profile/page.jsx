@@ -4,11 +4,18 @@ export const dynamic = 'force-dynamic';
 import ProfilePanel from '@/components/Profile/ProfilePanel';
 import BottomNavbar from '@/components/Navigation/BottomNavbar';
 import { useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 
 const ProfileContent = () => {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const searchParams = useSearchParams();
   const [activeNavItem, setActiveNavItem] = useState(4); // Profil aktif
+
+  if (!isMounted) return null;
 
   return (
     <div className="flex flex-col h-[100dvh] bg-[#eaeaea] overflow-hidden">

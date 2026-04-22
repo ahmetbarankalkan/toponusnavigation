@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 function KioskContent() {
+  const [isMounted, setIsMounted] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentTime, setCurrentTime] = useState('');
@@ -16,9 +17,15 @@ function KioskContent() {
   const [campaigns, setCampaigns] = useState([]);
   const [currentCampaignIndex, setCurrentCampaignIndex] = useState(0);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Eğer kiosk=true parametresi varsa harita sayfasına yönlendir
   useEffect(() => {
+    if (!isMounted) return;
     const isKioskMode = searchParams.get('kiosk') === 'true';
+
     if (isKioskMode) {
       router.push(
         '/?slug=ankamall&lat=39.95026307131235&lng=32.83056577782409&floor=0&kiosk=true'
@@ -314,6 +321,8 @@ function KioskContent() {
       }
     };
   }, []);
+
+  if (!isMounted) return null;
 
   return (
     <>

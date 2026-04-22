@@ -8,6 +8,10 @@ import BottomNavbar from '@/components/Navigation/BottomNavbar';
 import StoreDetailDesign from '@/components/Store/StoreDetailDesign';
 
 function FavoritesContent() {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -335,6 +339,8 @@ function FavoritesContent() {
       </div>
     );
   }
+
+  if (!isMounted) return null;
 
   /* ─── Main ─── */
   return (

@@ -11,6 +11,10 @@ import { useGraphBuilder } from '@/hooks/useGraphBuilder';
 import { multiFloorDijkstra } from '@/utils/dijkstra';
 
 function KioskLocationContent() {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { buildMultiFloorGraph } = useGraphBuilder();
@@ -134,6 +138,8 @@ function KioskLocationContent() {
   };
 
   // Render Logic
+  if (!isMounted) return null;
+
   if (isLoading) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-gray-100">

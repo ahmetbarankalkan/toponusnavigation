@@ -16,13 +16,6 @@ export const metadata = {
   title: 'Toponus Indoor Navigation',
   description: 'Indoor Navigation Assistant',
   manifest: '/manifest.json',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    minimumScale: 1,
-    userScalable: false,
-  },
   icons: {
     icon: '/assets/favicon.svg',
     apple: '/assets/icon-192x192.png',
@@ -32,8 +25,17 @@ export const metadata = {
     statusBarStyle: 'default',
     title: 'Toponus',
   },
-  themeColor: '#000000',
 };
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
+  themeColor: '#1B3349',
+};
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
