@@ -1,0 +1,43 @@
+{
+  "name": "Toponus Indoor Navigation",
+  "short_name": "Toponus",
+  "description": "Indoor Navigation Assistant - Kapalı Alan Navigasyon Asistanı",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "capture_links": "none",
+  "screenshots": [],
+  "icons": [
+    {
+      "src": "/assets/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["navigation", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Ana Sayfa",
+      "short_name": "Ana Sayfa",
+      "description": "Ana sayfaya git",
+      "url": "/",
+      "icons": [{ "src": "/assets/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Favoriler",
+      "short_name": "Favoriler",
+      "description": "Favori mekanlarım",
+      "url": "/favorites",
+      "icons": [{ "src": "/assets/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Cache Debugger - Toponus v2.0.4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1B3349 0%, #0a1929 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #4ECDC4;
+        }
+        
+        .version-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .info-box h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #4ECDC4;
+        }
+        
+        .info-box p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .info-box code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #4ECDC4;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .btn-danger:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .btn-success:active {
+            transform: scale(0.98);
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .log-entry.success {
+            border-left: 3px solid #4ECDC4;
+        }
+        
+        .log-entry.error {
+            border-left: 3px solid #f5576c;
+        }
+        
+        .log-entry.info {
+            border-left: 3px solid #4facfe;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.green {
+            background: #4ECDC4;
+        }
+        
+        .status-dot.red {
+            background: #f5576c;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 iOS Cache Debugger</h1>
+        
+        <div class="version-badge">
+            Version 2.0.4 ✨
+        </div>
+        
+        <div class="info-box">
+            <h2>📱 Cihaz Bilgisi</h2>
+            <div class="status">
+                <div class="status-dot green"></div>
+                <p id="device-info">Yükleniyor...</p>
+            </div>
+            <p><strong>User Agent:</strong> <code id="user-agent"></code></p>
+            <p><strong>Platform:</strong> <code id="platform"></code></p>
+            <p><strong>PWA Modu:</strong> <code id="pwa-mode"></code></p>
+        </div>
+        
+        <div class="info-box">
+            <h2>🔄 Service Worker Durumu</h2>
+            <div class="status">
+                <div class="status-dot" id="sw-status-dot"></div>
+                <p id="sw-status">Kontrol ediliyor...</p>
+            </div>
+            <p><strong>SW Version:</strong> <code id="sw-version">-</code></p>
+            <p><strong>SW State:</strong> <code id="sw-state">-</code></p>
+        </div>
+        
+        <div class="info-box">
+            <h2>💾 Cache Bilgisi</h2>
+            <p><strong>Cache Sayısı:</strong> <code id="cache-count">-</code></p>
+            <p id="cache-list"></p>
+        </div>
+        
+        <button class="btn btn-danger" onclick="clearAllCaches()">
+            🗑️ Tüm Cache'leri Temizle
+        </button>
+        
+        <button class="btn btn-danger" onclick="unregisterServiceWorker()">
+            ❌ Service Worker'ı Kaldır
+        </button>
+        
+        <button class="btn btn-success" onclick="forceUpdate()">
+            🔄 Zorla Güncelle & Yenile
+        </button>
+        
+        <button class="btn btn-success" onclick="checkForUpdates()">
+            🔍 Güncelleme Kontrol Et
+        </button>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">
+                <strong>[INFO]</strong> Debug sayfası yüklendi...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<strong>[${type.toUpperCase()}]</strong> ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Device Info
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('platform').textContent = navigator.platform;
+        
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true;
+        document.getElementById('pwa-mode').textContent = isPWA ? 'Evet ✅' : 'Hayır ❌';
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        document.getElementById('device-info').textContent = isIOS ? 'iOS Cihaz ✅' : 'iOS Değil ❌';
+        
+        // Service Worker Status
+        async function checkSWStatus() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        const sw = registration.active || registration.installing || registration.waiting;
+                        if (sw) {
+                            document.getElementById('sw-status').textContent = 'Aktif ✅';
+                            document.getElementById('sw-status-dot').className = 'status-dot green';
+                            document.getElementById('sw-state').textContent = sw.state;
+                            addLog('Service Worker aktif: ' + sw.state, 'success');
+                        }
+                    } else {
+                        document.getElementById('sw-status').textContent = 'Yok ❌';
+                        document.getElementById('sw-status-dot').className = 'status-dot red';
+                        addLog('Service Worker bulunamadı', 'error');
+                    }
+                } catch (err) {
+                    addLog('SW kontrol hatası: ' + err.message, 'error');
+                }
+            } else {
+                document.getElementById('sw-status').textContent = 'Desteklenmiyor ❌';
+                document.getElementById('sw-status-dot').className = 'status-dot red';
+                addLog('Service Worker desteklenmiyor', 'error');
+            }
+        }
+        
+        // Cache Status
+        async function checkCaches() {
+            try {
+                const cacheNames = await caches.keys();
+                document.getElementById('cache-count').textContent = cacheNames.length;
+                document.getElementById('cache-list').innerHTML = cacheNames.length > 0 
+                    ? '<strong>Cacheler:</strong> ' + cacheNames.map(name => `<code>${name}</code>`).join(', ')
+                    : '<strong>Hiç cache yok ✅</strong>';
+                addLog(`${cacheNames.length} cache bulundu: ${cacheNames.join(', ')}`, 'info');
+            } catch (err) {
+                addLog('Cache kontrol hatası: ' + err.message, 'error');
+            }
+        }
+        
+        // Clear All Caches
+        async function clearAllCaches() {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                addLog(`${cacheNames.length} cache temizlendi`, 'success');
+                await checkCaches();
+                alert('✅ Tüm cache\'ler temizlendi!');
+            } catch (err) {
+                addLog('Cache temizleme hatası: ' + err.message, 'error');
+                alert('❌ Hata: ' + err.message);
+            }
+        }
+        
+        // Unregister Service Worker
+        async function unregisterServiceWorker() {
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.unregister();
+                    addLog('Service Worker kaldırıldı', 'success');
+                    await checkSWStatus();
+                    alert('✅ Service Worker kaldırıldı!');
+                } else {
+                    addLog('Kaldırılacak Service Worker yok', 'info');
+                    alert('ℹ️ Zaten Service Worker yok');
+                }
+            } catch (err) {
+                addLog('SW kaldırma hatası: ' + err.message, 'error');
+                alert('❌ Hata: ' + err.message);
+            }
+        }
+        
+        // Force Update
+        async function forceUpdate() {
+            try {
+                addLog('TÜM cache\'ler temizleniyor...', 'info');
+                await clearAllCaches();
+                
+                addLog('Service Worker kaldırılıyor...', 'info');
+                await unregisterServiceWorker();
+                
+                addLog('Sayfa yenileniyor...', 'success');
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+            } catch (err) {
+                addLog('Zorla güncelleme hatası: ' + err.message, 'error');
+                alert('❌ Hata: ' + err.message);
+            }
+        }
+        
+        // Check for Updates
+        async function checkForUpdates() {
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    addLog('Güncelleme kontrol ediliyor...', 'info');
+                    await registration.update();
+                    addLog('Güncelleme kontrolü tamamlandı', 'success');
+                    alert('✅ Güncelleme kontrol edildi');
+                } else {
+                    addLog('Service Worker yok, kontrol edilemiyor', 'error');
+                    alert('❌ Service Worker bulunamadı');
+                }
+            } catch (err) {
+                addLog('Güncelleme kontrol hatası: ' + err.message, 'error');
+                alert('❌ Hata: ' + err.message);
+            }
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            checkSWStatus();
+            checkCaches();
+            addLog('Tüm kontroller tamamlandı', 'success');
+        });
+    </script>
+</body>
+</html>

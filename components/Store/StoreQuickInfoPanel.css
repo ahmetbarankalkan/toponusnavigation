@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.store-quick-info-panel {
+  align-items: flex-start;
+  display: flex;
+  min-width: 318px;
+  position: fixed;
+  bottom: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.store-quick-info-wrapper {
+  background-color: #f3f3f3;
+  border-radius: 20px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+  display: flex;
+  width: 318px;
+  padding: 15px 9px;
+}
+
+.store-quick-info-content {
+  position: relative;
+  width: 100%;
+  height: 127px;
+}
+
+/* Favori Butonu (Kalp) - Sağ üstte solda */
+.store-quick-favorite-btn {
+  position: absolute;
+  top: 4px;
+  right: 30px;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.store-quick-favorite-btn:hover {
+  transform: scale(1.15);
+}
+
+.store-quick-favorite-btn:active {
+  transform: scale(0.95);
+}
+
+/* Kapatma Butonu - Sağ üstte en sağda */
+.store-quick-close-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #263d52;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.store-quick-close-btn:hover {
+  transform: scale(1.1);
+  color: #1b3349;
+}
+
+/* Logo Container */
+.store-quick-logo-container {
+  position: absolute;
+  left: 7px;
+  top: 0;
+  width: 78px;
+  height: 75px;
+}
+
+.store-quick-logo-bg {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0px 4px 14.1px 4px rgba(0, 0, 0, 0.1);
+  width: 78px;
+  height: 75px;
+  position: absolute;
+  top: 1px;
+  left: 0;
+}
+
+.store-quick-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 65px;
+  height: auto;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.store-quick-logo-placeholder {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 65px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #263d52;
+  font-family: 'Poppins', Helvetica, sans-serif;
+}
+
+/* Mağaza Bilgileri */
+.store-quick-info {
+  position: absolute;
+  left: 94px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 120px;
+}
+
+.store-quick-name {
+  color: #263d52;
+  font-family: 'Poppins', Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+  width: 100%;
+}
+
+.store-quick-hours {
+  color: #000000;
+  font-family: 'Poppins', Helvetica, sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  text-align: left;
+  margin: 0 0 6px 0;
+  width: 100%;
+}
+
+/* Yıldız Değerlendirme */
+.store-quick-rating {
+  position: absolute;
+  left: 94px;
+  top: 44px;
+  display: flex;
+  gap: 4px;
+  height: 20px;
+  align-items: center;
+}
+
+.store-quick-star {
+  width: 14px;
+  height: 13px;
+  color: #d1d5db;
+  transition: color 0.2s;
+}
+
+.store-quick-star.filled {
+  color: #00334e;
+}
+
+/* Detaylara Göz At Butonu */
+.store-quick-details-btn {
+  position: absolute;
+  left: 189px;
+  top: 44px;
+  width: 63px;
+  height: 20px;
+  border: 1px solid #263d52;
+  border-radius: 20px;
+  background: transparent;
+  color: #263d52;
+  font-family: 'Poppins', Helvetica, sans-serif;
+  font-size: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+}
+
+.store-quick-details-btn:hover {
+  background: #263d52;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Yol Tarifi Al Butonu */
+.store-quick-route-btn {
+  position: absolute;
+  left: 0;
+  top: 86px;
+  width: 300px;
+  height: 41px;
+  background-color: rgba(27, 51, 73, 0.95);
+  border-radius: 20px;
+  box-shadow: 0px 4px 11.6px rgba(0, 0, 0, 0.25);
+  border: none;
+  color: #ffffff;
+  font-family: 'Poppins', Helvetica, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.store-quick-route-btn:hover {
+  background-color: rgba(27, 51, 73, 1);
+  transform: translateY(-2px);
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.store-quick-route-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+/* Tablet için düzenleme */
+@media (max-width: 768px) {
+  .store-quick-info-panel {
+    bottom: 150px;
+  }
+}
+
+/* Mobil için düzenleme */
+@media (max-width: 480px) {
+  .store-quick-info-panel {
+    min-width: 280px;
+    bottom: 135px;
+  }
+
+  .store-quick-info-wrapper {
+    width: 280px;
+  }
+
+  .store-quick-route-btn {
+    width: 262px;
+  }
+}

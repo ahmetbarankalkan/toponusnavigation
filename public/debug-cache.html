@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Debug Panel - Toponus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1B3349 0%, #0a1929 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .version {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #60a5fa;
+        }
+
+        .info-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            opacity: 0.7;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-family: 'Courier New', monospace;
+            color: #4ade80;
+            word-break: break-all;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .cache-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .cache-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.active {
+            background: #10b981;
+        }
+
+        .status.inactive {
+            background: #ef4444;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 10px;
+        }
+
+        .log-entry.success {
+            border-left-color: #10b981;
+        }
+
+        .log-entry.error {
+            border-left-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cache Debug Panel</h1>
+        <p class="version">Toponus v2.0.2</p>
+
+        <!-- Service Worker Status -->
+        <div class="section">
+            <h2>Service Worker Durumu</h2>
+            <div class="info-item">
+                <div class="info-label">Durum:</div>
+                <div class="info-value" id="sw-status">Kontrol ediliyor...</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Script URL:</div>
+                <div class="info-value" id="sw-url">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">State:</div>
+                <div class="info-value" id="sw-state">-</div>
+            </div>
+        </div>
+
+        <!-- Cache List -->
+        <div class="section">
+            <h2>Kayıtlı Cache'ler</h2>
+            <div class="cache-list" id="cache-list">
+                <div class="info-value">Yükleniyor...</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="section">
+            <h2>İşlemler</h2>
+            <button class="btn-primary" onclick="checkForUpdates()">
+                🔄 Güncellemeleri Kontrol Et
+            </button>
+            <button class="btn-danger" onclick="clearAllCaches()">
+                🗑️ Tüm Cache'leri Temizle
+            </button>
+            <button class="btn-danger" onclick="unregisterServiceWorker()">
+                ❌ Service Worker'ı Kaldır
+            </button>
+            <button class="btn-success" onclick="hardReload()">
+                ♻️ Hard Reload (Tam Yenileme)
+            </button>
+        </div>
+
+        <!-- Logs -->
+        <div class="section">
+            <h2>İşlem Logları</h2>
+            <div class="log" id="log"></div>
+        </div>
+
+        <!-- Info -->
+        <div class="section">
+            <h2>Sistem Bilgileri</h2>
+            <div class="info-item">
+                <div class="info-label">User Agent:</div>
+                <div class="info-value" id="user-agent">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Online Durumu:</div>
+                <div class="info-value" id="online-status">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Sayfa URL:</div>
+                <div class="info-value" id="page-url">-</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('log');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.insertBefore(entry, logContainer.firstChild);
+        }
+
+        // Service Worker Status
+        async function updateServiceWorkerStatus() {
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    const sw = registration.active || registration.installing || registration.waiting;
+                    document.getElementById('sw-status').innerHTML = 
+                        '<span class="status active">Aktif</span>';
+                    document.getElementById('sw-url').textContent = sw?.scriptURL || '-';
+                    document.getElementById('sw-state').textContent = sw?.state || '-';
+                    log('Service Worker aktif', 'success');
+                } else {
+                    document.getElementById('sw-status').innerHTML = 
+                        '<span class="status inactive">Pasif</span>';
+                    log('Service Worker bulunamadı', 'error');
+                }
+            } else {
+                document.getElementById('sw-status').innerHTML = 
+                    '<span class="status inactive">Desteklenmiyor</span>';
+                log('Service Worker desteklenmiyor', 'error');
+            }
+        }
+
+        // Cache List
+        async function updateCacheList() {
+            const cacheNames = await caches.keys();
+            const cacheList = document.getElementById('cache-list');
+            
+            if (cacheNames.length === 0) {
+                cacheList.innerHTML = '<div class="info-value">Cache bulunamadı</div>';
+                log('Hiç cache bulunamadı', 'info');
+            } else {
+                cacheList.innerHTML = '';
+                for (const name of cacheNames) {
+                    const cache = await caches.open(name);
+                    const keys = await cache.keys();
+                    const div = document.createElement('div');
+                    div.className = 'cache-item';
+                    div.innerHTML = `<strong>${name}</strong><br>${keys.length} dosya`;
+                    cacheList.appendChild(div);
+                }
+                log(`${cacheNames.length} cache bulundu`, 'success');
+            }
+        }
+
+        // Check for updates
+        async function checkForUpdates() {
+            log('Güncelleme kontrolü başlatıldı...', 'info');
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.update();
+                    log('Güncelleme kontrolü tamamlandı', 'success');
+                    setTimeout(() => {
+                        updateServiceWorkerStatus();
+                        updateCacheList();
+                    }, 1000);
+                } else {
+                    log('Service Worker kaydı bulunamadı', 'error');
+                }
+            }
+        }
+
+        // Clear all caches
+        async function clearAllCaches() {
+            log('Tüm cache\'ler temizleniyor...', 'info');
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            log(`${cacheNames.length} cache temizlendi`, 'success');
+            await updateCacheList();
+        }
+
+        // Unregister Service Worker
+        async function unregisterServiceWorker() {
+            log('Service Worker kaldırılıyor...', 'info');
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map(r => r.unregister()));
+            log('Service Worker kaldırıldı', 'success');
+            await updateServiceWorkerStatus();
+        }
+
+        // Hard Reload
+        function hardReload() {
+            log('Hard reload yapılıyor...', 'info');
+            window.location.reload(true);
+        }
+
+        // System Info
+        function updateSystemInfo() {
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+            document.getElementById('online-status').textContent = navigator.onLine ? 'Online ✅' : 'Offline ❌';
+            document.getElementById('page-url').textContent = window.location.href;
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            log('Debug panel yüklendi', 'success');
+            updateServiceWorkerStatus();
+            updateCacheList();
+            updateSystemInfo();
+        });
+
+        // Listen for online/offline
+        window.addEventListener('online', () => {
+            log('İnternet bağlantısı kuruldu', 'success');
+            updateSystemInfo();
+        });
+        window.addEventListener('offline', () => {
+            log('İnternet bağlantısı kesildi', 'error');
+            updateSystemInfo();
+        });
+    </script>
+</body>
+</html>
