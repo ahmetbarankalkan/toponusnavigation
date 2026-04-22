@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {
@@ -22,26 +22,26 @@ import {
 import { elevatorIcon, escalatorIcon, arrowIcon } from '../utils/icons.js';
 
 // Lazy load modals and heavy UI components for mobile performance
-const DiscoverModal = dynamic(() => import('@/components/DiscoverModal'), {
+const DiscoverModal = nextDynamic(() => import('@/components/DiscoverModal'), {
   ssr: false,
   loading: () => null,
 });
-const QRPopup = dynamic(() => import('@/components/UI/QRPopup'), {
+const QRPopup = nextDynamic(() => import('@/components/UI/QRPopup'), {
   ssr: false,
   loading: () => null,
 });
-const DemoPopup = dynamic(() => import('@/components/UI/DemoPopup'), {
+const DemoPopup = nextDynamic(() => import('@/components/UI/DemoPopup'), {
   ssr: false,
   loading: () => null,
 });
-const StoreInfoPanel = dynamic(
+const StoreInfoPanel = nextDynamic(
   () => import('@/components/Store/StoreInfoPanel'),
   {
     ssr: false,
     loading: () => null,
   }
 );
-const StoreQuickInfoPanel = dynamic(
+const StoreQuickInfoPanel = nextDynamic(
   () => import('@/components/Store/StoreQuickInfoPanel'),
   {
     ssr: false,
@@ -102,7 +102,7 @@ import { useSimpleVoice } from '@/hooks/useSimpleVoice';
 import { useGraphBuilder } from '../hooks/useGraphBuilder';
 import { getCookie } from '../utils/markerHelpers';
 // Lazy load heavy components for better mobile performance
-const AssistantModal = dynamic(() => import('@/components/AssistantModal'), {
+const AssistantModal = nextDynamic(() => import('@/components/AssistantModal'), {
   ssr: false,
   loading: () => null,
 });
@@ -117,7 +117,7 @@ import {
 import { calculateAdvancedRoute } from '../utils/advancedRouting.js';
 import { detectUserLocation } from '../utils/locationHelpers.js';
 
-const StarRating = dynamic(() => import('@/components/Rating/StarRating'), {
+const StarRating = nextDynamic(() => import('@/components/Rating/StarRating'), {
   ssr: false,
   loading: () => null,
 });
