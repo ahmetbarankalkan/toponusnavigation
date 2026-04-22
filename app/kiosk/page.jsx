@@ -6,7 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function KioskPage() {
+function KioskContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentTime, setCurrentTime] = useState('');
