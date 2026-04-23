@@ -924,7 +924,6 @@ function MapContent() {
       newUrl.searchParams.delete('to');
       window.history.replaceState({}, '', newUrl.toString());
     }
-    }
   }, [searchParams, rooms, currentFloor]);
 
   // Hash kontrolü - Asistan modalını aç
@@ -971,7 +970,6 @@ function MapContent() {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('openDiscover');
       window.history.replaceState({}, '', newUrl.toString());
-    }
     }
   }, [searchParams]);
   useEffect(() => {
