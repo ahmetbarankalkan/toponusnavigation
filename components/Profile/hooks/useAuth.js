@@ -99,7 +99,14 @@ export function useAuth() {
     }
 
     try {
-      const payload = { email: cleanEmail, password: cleanPassword };
+      const payload = { 
+        email: cleanEmail, 
+        password: cleanPassword,
+        displayName: formData.displayName,
+        phone: formData.phone,
+        countryCode: formData.countryCode,
+        dateOfBirth: formData.dateOfBirth
+      };
 
       console.log('🔐 Auth request:', { endpoint, email: cleanEmail });
 

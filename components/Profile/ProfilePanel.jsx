@@ -35,6 +35,7 @@ export default function ProfilePanel() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    countryCode: '+90',
   });
 
   // URL'den tab parametresini oku ve gereksiz parametreleri temizle
@@ -94,6 +95,7 @@ export default function ProfilePanel() {
         displayName: user.displayName || '',
         email: user.email || '',
         phone: user.phone || '',
+        countryCode: user.countryCode || '+90',
         dateOfBirth: user.dateOfBirth || '',
         currentPassword: '',
         newPassword: '',

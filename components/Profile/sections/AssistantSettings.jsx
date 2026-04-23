@@ -63,10 +63,10 @@ export default function AssistantSettings({
     <div className="w-full h-full flex flex-col bg-[#EAEAEA] overflow-hidden relative">
       {/* Curved Header Block */}
       <div 
-        className="relative bg-[#253C51] pt-12 shrink-0 flex flex-col items-center"
-        style={{ height: '206px', borderRadius: '0px 0px 20px 20px' }}
+        className="relative bg-[#253C51] shrink-0 flex flex-col items-center"
+        style={{ height: '180px', borderRadius: '0px 0px 20px 20px' }}
       >
-        <div className="w-full px-6 flex items-center justify-between mb-2">
+        <div className="w-full px-6 flex items-center justify-between h-full">
           {/* Back Button */}
           <button 
             onClick={() => setActiveSection('main')} 
@@ -77,9 +77,9 @@ export default function AssistantSettings({
             </svg>
           </button>
           
-          {/* Title */}
+          {/* Title - Centered vertically and horizontally */}
           <h2
-            className="text-white text-[16px] font-medium absolute left-1/2 -translate-x-1/2 mt-1"
+            className="text-white text-[16px] font-medium absolute left-1/2 -translate-x-1/2"
             style={{ fontFamily: 'Poppins, sans-serif' }}
           >
             Asistan Kullanıcı Adı
@@ -88,8 +88,8 @@ export default function AssistantSettings({
         </div>
       </div>
 
-      {/* Floating Center Icon */}
-      <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: '140px' }}>
+      {/* Floating Icon Card */}
+      <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: '125px' }}>
         <div 
           className="bg-white flex items-center justify-center relative shadow-[0_1px_7.6px_rgba(0,0,0,0.25)] rounded-[20px]"
           style={{ width: '110px', height: '105px' }}

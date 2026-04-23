@@ -7,9 +7,9 @@ import { createJWTToken } from "@/utils/auth.js";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, displayName, phone, dateOfBirth, countryCode } = body;
 
-
+    const fullPhone = countryCode && phone ? `${countryCode}${phone}` : phone;
 
     // Validasyon
     if (!email || !password) {
@@ -56,6 +56,9 @@ export async function POST(request) {
       username,
       email,
       password, // Model'deki middleware otomatik hash'leyecek
+      displayName,
+      phone: fullPhone,
+      dateOfBirth,
       role: "basic_user",
       is_active: true,
       visitedStores: [],

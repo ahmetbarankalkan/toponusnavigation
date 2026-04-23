@@ -26,7 +26,7 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    const { displayName, currentPassword, newPassword, phone, dateOfBirth } = body;
+    const { displayName, currentPassword, newPassword, phone, countryCode, dateOfBirth } = body;
 
 
 
@@ -53,6 +53,12 @@ export async function PUT(request) {
     // Phone güncelleme
     if (phone !== undefined && phone !== user.phone) {
       user.phone = phone.trim() === '' ? null : phone.trim();
+      updated = true;
+    }
+
+    // Country code güncelleme
+    if (countryCode !== undefined && countryCode !== user.countryCode) {
+      user.countryCode = countryCode;
       updated = true;
     }
 
@@ -110,6 +116,7 @@ export async function PUT(request) {
       role: user.role,
       email: user.email,
       phone: user.phone,
+      countryCode: user.countryCode,
       dateOfBirth: user.dateOfBirth,
       displayName: user.displayName,
       visitedStores: user.visitedStores || [],

@@ -271,13 +271,19 @@ function MapContent() {
   const [locationMarkerCoords, setLocationMarkerCoords] = useState(null);
   const [locationMarkerFloor, setLocationMarkerFloor] = useState(0);
   const qrProcessedRef = useRef(false);
+
+  // Define changeFloor before it's used in other hooks
+  const changeFloor = useCallback(newFloor => {
+    setCurrentFloor(newFloor);
+  }, []);
+
   const {
     animateIconAlongRoute,
     stopAnimation,
     startAnimation,
     isAnimationActiveRef,
     animationFrameIdRef,
-  } = useRouteAnimation({ mapRef, currentFloor });
+  } = useRouteAnimation({ mapRef, currentFloor, changeFloor });
   const [showStoreRating, setShowStoreRating] = useState(false);
   const [selectedStoreForRating, setSelectedStoreForRating] = useState(null);
   const [showQuickStoreInfo, setShowQuickStoreInfo] = useState(false);
@@ -328,11 +334,6 @@ function MapContent() {
   useEffect(() => {
     isSelectingStartRoomRef.current = isSelectingStartRoom;
   }, [isSelectingStartRoom]);
-
-  // Define changeFloor before it's used in other hooks
-  const changeFloor = useCallback(newFloor => {
-    setCurrentFloor(newFloor);
-  }, []);
 
   const { handleSearchResultSelect } = useSearchHandlers({
     setSearchQuery,
@@ -856,15 +857,34 @@ function MapContent() {
   useEffect(() => {
     const targetRoom = searchParams.get('targetRoom');
     const selectStart = searchParams.get('selectStart');
-    if (targetRoom && selectStart === 'true' && rooms.length > 0) {
-      setSelectedEndRoom(targetRoom);
-      const room = rooms.find(r => r.id === targetRoom);
+    if (targetRoom && rooms.length > 0) {
+      const room = rooms.find(r => r.id === targetRoom || r.room_id === targetRoom);
       if (room) {
-        setEndQuery(room.name);
-        setActiveNavItem(0);
-        setIsCardMinimized(true);
-        setIsSelectingStartRoom(true);
-        window.history.replaceState({}, '', '/?slug=ankamall');
+        if (selectStart === 'true') {
+          setSelectedEndRoom(room.id);
+          setEndQuery(room.name);
+          setActiveNavItem(0);
+          setIsCardMinimized(true);
+          setIsSelectingStartRoom(true);
+        } else {
+          // Open store info panel directly
+          setSelectedStoreForRating(room);
+          setShowStoreRating(true);
+          
+          // Optionally fly to the room
+          if (mapRef.current && room.coordinates) {
+            mapRef.current.flyTo({
+              center: room.coordinates,
+              zoom: 18,
+              duration: 1500
+            });
+          }
+        }
+        // Clean URL to prevent re-opening
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('targetRoom');
+        newUrl.searchParams.delete('selectStart');
+        window.history.replaceState({}, '', newUrl.toString());
       }
     }
   }, [searchParams, rooms]);
@@ -1691,6 +1711,9 @@ function MapContent() {
           await Promise.all(logoPromises);
         };
         loadRoomLogos();
+        // Harita hazır değilse hiçbir işlem yapma
+        if (!map) return;
+
         Object.entries(floorData).forEach(([floor, data]) => {
           const floorNum = parseInt(floor);
           if (isNaN(floorNum)) return;

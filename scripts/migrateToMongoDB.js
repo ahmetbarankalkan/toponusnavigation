@@ -159,7 +159,7 @@ async function migrateToMongoDB() {
         role: "store_owner",
         email: "teknosa@signolog.com",
         place_id: ankamallPlace?._id, // Teknosa'nın olduğu mekan
-        store_id: "room-157", // Teknosa'nın room_id'si
+        store_id: "", // Teknosa'nın room_id'si (Gerçek ID bulunmalı)
       },
     ];
 

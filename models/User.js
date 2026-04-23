@@ -22,6 +22,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       sparse: true, // allows null values
     },
+    countryCode: {
+      type: String,
+      default: '+90',
+    },
     dateOfBirth: {
       type: String,
     },

@@ -11,10 +11,10 @@ export default function ProfileEdit({
     <div className="w-full h-full flex flex-col bg-[#EAEAEA] overflow-hidden relative">
       {/* Header */}
       <div 
-        className="relative bg-[#253C51] pt-12 shrink-0 flex flex-col items-center"
-        style={{ height: '206px', borderRadius: '0px 0px 20px 20px' }}
+        className="relative bg-[#253C51] shrink-0 flex flex-col items-center"
+        style={{ height: '180px', borderRadius: '0px 0px 20px 20px' }}
       >
-        <div className="w-full px-6 flex items-center justify-between mb-2">
+        <div className="w-full px-6 flex items-center justify-between h-full">
           {/* Back Button */}
           <button 
             onClick={() => setActiveSection('main')} 
@@ -24,7 +24,7 @@ export default function ProfileEdit({
               <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          {/* Title */}
+          {/* Title - Centered vertically and horizontally */}
           <h2
             className="text-white text-[16px] font-medium absolute left-1/2 -translate-x-1/2"
             style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -36,7 +36,7 @@ export default function ProfileEdit({
       </div>
 
       {/* Floating Center Profile Icon */}
-      <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: '140px' }}>
+      <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: '125px' }}>
         <div 
           className="bg-white flex items-center justify-center relative"
           style={{ width: '110px', height: '105px', borderRadius: '20px', boxShadow: '0px 1px 7.6px rgba(0, 0, 0, 0.25)' }}
@@ -107,7 +107,18 @@ export default function ProfileEdit({
               <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
             </svg>
             <div className="flex items-center">
-              <span className="text-[#000000] text-[12px] font-medium mr-2" style={{ fontFamily: 'Poppins, sans-serif' }}>+90</span>
+              <select 
+                value={editForm.countryCode || '+90'}
+                onChange={e => setEditForm({ ...editForm, countryCode: e.target.value })}
+                className="bg-transparent border-none outline-none text-[#000000] text-[11px] font-medium mr-1 cursor-pointer appearance-none"
+                style={{ fontFamily: 'Poppins, sans-serif' }}
+              >
+                <option value="+90">+90</option>
+                <option value="+1">+1</option>
+                <option value="+44">+44</option>
+                <option value="+49">+49</option>
+                <option value="+33">+33</option>
+              </select>
               <div className="h-[14px] w-[1px] bg-[#253C51]/20 mr-3"></div>
             </div>
             <input

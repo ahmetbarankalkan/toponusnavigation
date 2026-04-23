@@ -24,14 +24,14 @@ export default function SettingsPanel({
     <div className="w-full h-full flex flex-col bg-[#EAEAEA] overflow-hidden relative">
       {/* Curved Header Block */}
       <div 
-        className="relative bg-[#253C51] pt-12 shrink-0 flex flex-col items-center"
+        className="relative bg-[#253C51] shrink-0 flex flex-col items-center"
         style={{ height: '180px', borderRadius: '0px 0px 20px 20px' }}
       >
-        <div className="w-full px-6 flex items-center justify-between mb-2">
+        <div className="w-full px-6 flex items-center justify-between h-full">
           {/* Back Button */}
           <button 
             onClick={() => setActiveSection('main')} 
-            className="text-white p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors"
+            className="text-white p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors z-10"
           >
             <svg
               width="24"
@@ -45,7 +45,7 @@ export default function SettingsPanel({
             </svg>
           </button>
 
-          {/* Title */}
+          {/* Title - Centered vertically and horizontally */}
           <h2
             className="text-white text-[16px] font-medium absolute left-1/2 -translate-x-1/2"
             style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -64,7 +64,7 @@ export default function SettingsPanel({
       </div>
 
       {/* Floating Center Icon */}
-      <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: '124px' }}>
+      <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: '125px' }}>
         <div 
           className="bg-white flex items-center justify-center relative"
           style={{ 
@@ -83,7 +83,7 @@ export default function SettingsPanel({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto px-[35px] pt-[70px] pb-[160px] flex flex-col items-center">
+      <div className="flex-1 overflow-y-auto px-[35px] pt-[80px] pb-[160px] flex flex-col items-center">
         
         <div className="w-full max-w-[350px] mx-auto space-y-6">
           

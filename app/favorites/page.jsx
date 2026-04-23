@@ -229,9 +229,9 @@ function FavoritesContent() {
       />
       
       {/* Logo Pill */}
-      <div className="absolute left-[13px] top-[11px] h-[24px] min-w-[60px] bg-white rounded-[20px] px-[12px] flex items-center justify-center shadow-sm">
+      <div className="absolute left-[13px] top-[11px] h-[24px] min-w-[80px] bg-white rounded-[20px] px-[12px] flex items-center justify-center shadow-sm border border-[#1B3349]/10">
         <span className="text-[9px] font-bold text-[#1B3349] uppercase font-poppins whitespace-nowrap">
-          {campaign.storeName || 'Mağaza'}
+          {campaign.roomData?.name || campaign.storeName || 'Mağaza'}
         </span>
       </div>
 

@@ -8,32 +8,30 @@ export default function ProfileMain({ user, setActiveSection, handleLogout }) {
   const slug = searchParams?.get('slug') || 'ankamall';
   return (
     <div className="w-full h-full flex flex-col bg-[#eaeaea] overflow-hidden">
-      {/* Header Section */}
+      {/* Header Section - Height Reduced to 100px */}
       <div
-        className="relative bg-[#1B3349] h-[120px] sm:h-[167px]"
+        className="relative bg-[#1B3349] h-[100px] sm:h-[120px]"
         style={{ borderRadius: '0 0 20px 0' }}
       >
-        {/* Welcome Text - Responsive positioning */}
-        <div className="absolute left-[130px] sm:left-[148px] bottom-[20px] sm:bottom-[25px] right-4">
+        {/* Welcome Text - Adjusted positioning */}
+        <div className="absolute left-[115px] sm:left-[140px] bottom-[15px] sm:bottom-[20px] right-4">
           <p
-            className="text-white text-[13px] sm:text-[14px] font-normal leading-[18px] sm:leading-[21px]"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+            className="text-white text-[12px] sm:text-[14px] font-normal leading-tight font-poppins"
           >
             Hoş geldiniz,
           </p>
           <p
-            className="text-white text-[14px] sm:text-[16px] font-semibold leading-[20px] sm:leading-[24px] truncate"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+            className="text-white text-[14px] sm:text-[16px] font-semibold leading-tight truncate font-poppins"
           >
             {user.displayName || user.email}
           </p>
         </div>
       </div>
 
-      {/* Profile Avatar Card - Responsive sizing */}
-      <div className="absolute left-0 top-[40px] sm:top-[65px] w-[100px] sm:w-[128px] h-[100px] sm:h-[132px] bg-white rounded-tr-[30px] sm:rounded-tr-[40px] rounded-br-[30px] sm:rounded-br-[40px] flex items-center justify-center shadow-lg z-10">
+      {/* Profile Avatar Card - Moved slightly up */}
+      <div className="absolute left-0 top-[25px] sm:top-[35px] w-[90px] sm:w-[110px] h-[90px] sm:h-[110px] bg-white rounded-tr-[30px] rounded-br-[30px] flex items-center justify-center shadow-lg z-10">
         <svg
-          className="w-[50px] h-[50px] sm:w-[59px] sm:h-[59px]"
+          className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px]"
           viewBox="0 0 59 59"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
