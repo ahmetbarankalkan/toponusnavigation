@@ -4,7 +4,7 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { getJWTSecret } from '@/utils/auth';
 
-// GET - Kullanıcının favori mağazalarını getir
+// GET - Kullanıcının tüm favorilerini getir
 export async function GET(request) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
@@ -27,9 +27,12 @@ export async function GET(request) {
       );
     }
 
+    // Tüm favori tiplerini birleştirip döndür
     return NextResponse.json({
       success: true,
       favorites: user.favoriteStores || [],
+      campaigns: user.favoriteCampaigns || [],
+      products: user.favoriteProducts || [],
     });
   } catch (error) {
     console.error('Favori getirme hatası:', error);
@@ -53,11 +56,11 @@ export async function POST(request) {
     }
 
     const decoded = jwt.verify(token, getJWTSecret());
-    const { storeId, storeName } = await request.json();
+    const { storeId, storeName, type = 'store', roomData, productData, campaignData } = await request.json();
 
     if (!storeId || !storeName) {
       return NextResponse.json(
-        { success: false, error: 'Mağaza bilgileri eksik' },
+        { success: false, error: 'Bilgiler eksik' },
         { status: 400 }
       );
     }
@@ -72,24 +75,62 @@ export async function POST(request) {
       );
     }
 
-    // Favori var mı kontrol et
-    const existingIndex = user.favoriteStores.findIndex(
-      fav => fav.storeId === storeId
-    );
-
     let action = '';
-    if (existingIndex > -1) {
-      // Favorilerden çıkar
-      user.favoriteStores.splice(existingIndex, 1);
-      action = 'removed';
+    let targetArray = '';
+
+    // Tipe göre ilgili array'i seç
+    if (type === 'product') {
+      if (!user.favoriteProducts) user.favoriteProducts = [];
+      const idx = user.favoriteProducts.findIndex(f => f.productId === storeId || f.storeId === storeId);
+      if (idx > -1) {
+        user.favoriteProducts.splice(idx, 1);
+        action = 'removed';
+      } else {
+        user.favoriteProducts.push({
+          storeId,
+          storeName,
+          productId: storeId,
+          roomData,
+          productData,
+          addedDate: new Date()
+        });
+        action = 'added';
+      }
+      targetArray = 'products';
+    } else if (type === 'campaign') {
+      if (!user.favoriteCampaigns) user.favoriteCampaigns = [];
+      const idx = user.favoriteCampaigns.findIndex(f => f.campaignId === storeId || f.storeId === storeId);
+      if (idx > -1) {
+        user.favoriteCampaigns.splice(idx, 1);
+        action = 'removed';
+      } else {
+        user.favoriteCampaigns.push({
+          storeId,
+          storeName,
+          campaignId: storeId,
+          roomData,
+          campaignData,
+          addedDate: new Date()
+        });
+        action = 'added';
+      }
+      targetArray = 'campaigns';
     } else {
-      // Favorilere ekle
-      user.favoriteStores.push({
-        storeId,
-        storeName,
-        addedDate: new Date(),
-      });
-      action = 'added';
+      // Varsayılan: Store
+      const idx = user.favoriteStores.findIndex(f => f.storeId === storeId);
+      if (idx > -1) {
+        user.favoriteStores.splice(idx, 1);
+        action = 'removed';
+      } else {
+        user.favoriteStores.push({
+          storeId,
+          storeName,
+          roomData,
+          addedDate: new Date()
+        });
+        action = 'added';
+      }
+      targetArray = 'stores';
     }
 
     await user.save();
@@ -98,9 +139,9 @@ export async function POST(request) {
       success: true,
       action,
       favorites: user.favoriteStores,
-      message: action === 'added' 
-        ? 'Mağaza favorilere eklendi' 
-        : 'Mağaza favorilerden çıkarıldı',
+      campaigns: user.favoriteCampaigns,
+      products: user.favoriteProducts,
+      message: action === 'added' ? 'Favorilere eklendi' : 'Favorilerden çıkarıldı',
     });
   } catch (error) {
     console.error('Favori işlemi hatası:', error);
@@ -110,3 +151,4 @@ export async function POST(request) {
     );
   }
 }
+

@@ -49,6 +49,16 @@ const UserSchema = new mongoose.Schema(
     favoriteCampaigns: [{
       campaignId: String,
       campaignTitle: String,
+      roomData: { type: Object },
+      campaignData: { type: Object },
+      addedDate: { type: Date, default: Date.now }
+    }],
+    favoriteProducts: [{
+      productId: String,
+      storeId: String,
+      storeName: String,
+      roomData: { type: Object },
+      productData: { type: Object },
       addedDate: { type: Date, default: Date.now }
     }],
     routeHistory: [{

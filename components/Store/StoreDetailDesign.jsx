@@ -91,7 +91,7 @@ const StoreDetailDesign = ({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[#00334E] text-[15px] font-medium">
+            <span className="text-[#1B3349] text-[15px] font-semibold font-poppins">
               {storeName}
             </span>
           </div>
@@ -102,7 +102,7 @@ const StoreDetailDesign = ({
           {/* Heart Icon */}
           <button
             onClick={handleFavoriteClick}
-            className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+            className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors shadow-sm"
           >
             {isFavorite ? (
               <svg width="20" height="18" viewBox="0 0 20 18" fill="none">
@@ -115,7 +115,7 @@ const StoreDetailDesign = ({
               <svg width="20" height="18" viewBox="0 0 20 18" fill="none">
                 <path
                   d="M14.5 0C12.76 0 11.09 0.81 10 2.09C8.91 0.81 7.24 0 5.5 0C2.42 0 0 2.42 0 5.5C0 9.08 3.4 12.12 8.55 16.7L10 18L11.45 16.7C16.6 12.12 20 9.08 20 5.5C20 2.42 17.58 0 14.5 0ZM10.1 15.3L10 15.4L9.9 15.3C5.14 11.16 2 8.38 2 5.5C2 3.5 3.5 2 5.5 2C7.04 2 8.54 2.99 9.07 4.36H10.93C11.46 2.99 12.96 2 14.5 2C16.5 2 18 3.5 18 5.5C18 8.38 14.86 11.16 10.1 15.3Z"
-                  fill="#32475A"
+                  fill="#1B3349"
                 />
               </svg>
             )}
@@ -124,12 +124,12 @@ const StoreDetailDesign = ({
           {/* Share Icon */}
           <button
             onClick={handleShareClick}
-            className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+            className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors shadow-sm"
           >
             <svg width="18" height="20" viewBox="0 0 18 20" fill="none">
               <path
                 d="M15 14.08C14.24 14.08 13.56 14.38 13.04 14.85L5.91 10.7C5.96 10.47 6 10.24 6 10C6 9.76 5.96 9.53 5.91 9.3L12.96 5.19C13.5 5.69 14.21 6 15 6C16.66 6 18 4.66 18 3C18 1.34 16.66 0 15 0C13.34 0 12 1.34 12 3C12 3.24 12.04 3.47 12.09 3.7L5.04 7.81C4.5 7.31 3.79 7 3 7C1.34 7 0 8.34 0 10C0 11.66 1.34 13 3 13C3.79 13 4.5 12.69 5.04 12.19L12.16 16.35C12.11 16.56 12.08 16.78 12.08 17C12.08 18.61 13.39 19.92 15 19.92C16.61 19.92 17.92 18.61 17.92 17C17.92 15.39 16.61 14.08 15 14.08Z"
-                fill="#32475A"
+                fill="#1B3349"
               />
             </svg>
           </button>
@@ -137,17 +137,17 @@ const StoreDetailDesign = ({
       </div>
 
       {/* Content Card */}
-      <div className="bg-white rounded-t-[20px] rounded-b-[30px] border-2 border-[#32475A1C] -mt-2">
+      <div className="bg-white rounded-t-[20px] rounded-b-[30px] border-2 border-[#1B33491C] -mt-2">
         <div className="px-6 pt-6 pb-4">
           {/* Title */}
           <div className="flex items-center gap-1.5 mb-4">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path
                 d="M8.1 13.5H9.89999V8.1H8.1V13.5ZM8.99999 6.3C9.25499 6.3 9.46889 6.2136 9.64169 6.0408C9.81449 5.868 9.90059 5.6544 9.89999 5.4C9.89939 5.1456 9.81299 4.932 9.64079 4.7592C9.46859 4.5864 9.25499 4.5 8.99999 4.5C8.74499 4.5 8.53139 4.5864 8.35919 4.7592C8.18699 4.932 8.1006 5.1456 8.1 5.4C8.0994 5.6544 8.18579 5.8683 8.35919 6.0417C8.53259 6.2151 8.74619 6.3012 8.99999 6.3ZM8.99999 18C7.755 18 6.585 17.7636 5.49 17.2908C4.395 16.818 3.4425 16.1769 2.6325 15.3675C1.8225 14.5581 1.1814 13.6056 0.709201 12.51C0.237001 11.4144 0.000601139 10.2444 1.13924e-06 9C-0.00059886 7.7556 0.235801 6.5856 0.709201 5.49C1.1826 4.3944 1.8237 3.4419 2.6325 2.6325C3.4413 1.8231 4.3938 1.182 5.49 0.7092C6.5862 0.2364 7.7562 0 8.99999 0C10.2438 0 11.4138 0.2364 12.51 0.7092C13.6062 1.182 14.5587 1.8231 15.3675 2.6325C16.1763 3.4419 16.8177 4.3944 17.2917 5.49C17.7657 6.5856 18.0018 7.7556 18 9C17.9982 10.2444 17.7618 11.4144 17.2908 12.51C16.8198 13.6056 16.1787 14.5581 15.3675 15.3675C14.5563 16.1769 13.6038 16.8183 12.51 17.2917C11.4162 17.7651 10.2462 18.0012 8.99999 18Z"
-                fill="#32475A"
+                fill="#1B3349"
               />
             </svg>
-            <span className="text-[#32475A] text-[15px] font-medium">
+            <span className="text-[#1B3349] text-[15px] font-semibold font-poppins">
               Mağaza Bilgileri
             </span>
           </div>

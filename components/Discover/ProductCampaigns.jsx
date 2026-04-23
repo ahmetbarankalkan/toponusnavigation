@@ -30,7 +30,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
     }
   }, [isAuthenticated, user]);
 
-  const handleFavoriteToggle = async (e, product, room) => {
+  const handleFavoriteToggle = async (e, product, room, discount, discountedPrice) => {
     e.stopPropagation(); // Kartın click eventini durdur
     
     if (!isAuthenticated) {
@@ -51,12 +51,21 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
         },
         body: JSON.stringify({
           storeId: productId,
-          storeName: product.product_name || product.name || product.title,
+          storeName: room.name,
           type: 'product',
           roomData: {
             id: room.id,
             name: room.name,
-            floor: room.floor
+            floor: room.floor,
+            header_image: room.header_image || room.logo,
+            rating: room.rating
+          },
+          productData: {
+            product_name: product.product_name || product.name || product.title,
+            image: product.image,
+            price: product.price,
+            discounted_price: discountedPrice,
+            discount: discount
           }
         }),
       });
@@ -64,9 +73,9 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
       const data = await response.json();
       if (data.success) {
         if (data.action === 'added') {
-          setFavorites(prev => [...prev, { storeId: productId }]);
+          setFavorites(data.products || []);
         } else {
-          setFavorites(prev => prev.filter(f => f.storeId !== productId));
+          setFavorites(data.products || []);
         }
       }
     } catch (error) {
@@ -77,7 +86,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
   };
 
   const isProductFavorite = (productId) => {
-    return favorites.some(f => f.storeId === productId);
+    return favorites.some(f => f.productId === productId || f.storeId === productId);
   };
 
   // Eğer hiç ürün kampanyası yoksa, component'i gösterme
@@ -174,15 +183,15 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
                       </span>
                       
                       <button
-                        onClick={(e) => handleFavoriteToggle(e, product, room)}
+                        onClick={(e) => handleFavoriteToggle(e, product, room, discount, discountedPrice)}
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                          isFav ? 'bg-red-50' : 'bg-white/50 hover:bg-white'
+                          isFav ? 'bg-[#1B3349]/10' : 'bg-white/50 hover:bg-white'
                         } ${loadingFav[productId] ? 'animate-pulse' : ''}`}
                       >
                         <Heart 
                           size={16} 
                           className={`transition-colors ${
-                            isFav ? 'text-red-500 fill-red-500' : 'text-[#1B3349]'
+                            isFav ? 'text-[#1B3349] fill-[#1B3349]' : 'text-[#1B3349]'
                           }`}
                         />
                       </button>
