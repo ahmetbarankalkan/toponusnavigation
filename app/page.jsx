@@ -884,8 +884,17 @@ function MapContent() {
   }, [storeList]);
   // Handle targetRoom from URL
   useEffect(() => {
-    const targetRoom = searchParams.get('targetRoom');
-    const selectStart = searchParams.get('selectStart');
+    // Safari/Mobile compatibility: Use native URLSearchParams as fallback
+    const getParam = (key) => {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(key) || searchParams.get(key);
+      }
+      return searchParams.get(key);
+    };
+
+    const targetRoom = getParam('targetRoom');
+    const selectStart = getParam('selectStart');
     
     if (targetRoom && rooms.length > 0) {
       // Find room by multiple criteria to be safe
@@ -921,15 +930,19 @@ function MapContent() {
                   duration: 1500
                 });
               }
-            }, 500);
+            }, 800); // Safari needs a bit more time
           }
         }
         
         // ONLY clean the URL after we successfully found and processed the room
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('targetRoom');
-        newUrl.searchParams.delete('selectStart');
-        window.history.replaceState({}, '', newUrl.toString());
+        try {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('targetRoom');
+          newUrl.searchParams.delete('selectStart');
+          window.history.replaceState({}, '', newUrl.toString());
+        } catch (e) {
+          console.error("URL cleaning error:", e);
+        }
       }
     }
   }, [searchParams, rooms]);
