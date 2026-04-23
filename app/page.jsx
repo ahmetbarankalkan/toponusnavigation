@@ -301,8 +301,9 @@ function MapContent() {
       setActiveNavItem(1);
       setDiscoverHeight(50);
       // URL'den parametreyi temizle
-      const slug = searchParams.get('slug') || 'ankamall';
-      window.history.replaceState({}, '', `/?slug=${slug}`);
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('discover');
+      window.history.replaceState({}, '', newUrl.toString());
     }
   }, [searchParams]);
 
@@ -624,7 +625,9 @@ function MapContent() {
     }
 
     if (slug !== 'ankamall') {
-      window.history.replaceState({}, '', '/?slug=ankamall');
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('slug', 'ankamall');
+      window.history.replaceState({}, '', newUrl.toString());
       return;
     }
 
@@ -915,7 +918,12 @@ function MapContent() {
           changeFloor(fromRoom.floor);
         }
       }
-      window.history.replaceState({}, '', `/?slug=${searchParams.get('slug')}`);
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('navigate');
+      newUrl.searchParams.delete('from');
+      newUrl.searchParams.delete('to');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
     }
   }, [searchParams, rooms, currentFloor]);
 
@@ -960,7 +968,10 @@ function MapContent() {
     if (openDiscover === 'true') {
       setIsDiscoverOpen(true);
       setDiscoverHeight(50);
-      window.history.replaceState({}, '', `/?slug=${searchParams.get('slug')}`);
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('openDiscover');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
     }
   }, [searchParams]);
   useEffect(() => {
@@ -991,11 +1002,9 @@ function MapContent() {
         setActiveNavItem(0); // Rota sekmesine geç
 
         // URL'den search parametresini temizle
-        window.history.replaceState(
-          {},
-          '',
-          `/?slug=${searchParams.get('slug')}`
-        );
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('search');
+        window.history.replaceState({}, '', newUrl.toString());
       }
     }
   }, [searchParams, rooms, currentFloor]);
