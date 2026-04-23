@@ -615,20 +615,19 @@ function MapContent() {
   }, [selectedStartRoom, rooms]);
   const quickAccessList = getQuickAccessList();
 
+  const slug = searchParams.get('slug') || 'ankamall';
+  
   useEffect(() => {
-    const slug = searchParams.get('slug') || 'ankamall';
-    if (slug === 'ankamall') {
-      const demoPopupSeen = getCookie('demoPopupSeen');
-      if (!demoPopupSeen) {
-        setShowDemoPopup(true);
-      }
-    }
-
     if (slug !== 'ankamall') {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('slug', 'ankamall');
       window.history.replaceState({}, '', newUrl.toString());
       return;
+    }
+
+    const demoPopupSeen = getCookie('demoPopupSeen');
+    if (!demoPopupSeen) {
+      setShowDemoPopup(true);
     }
 
     fetch('/api/places?slug=' + encodeURIComponent(slug))
@@ -641,9 +640,35 @@ function MapContent() {
         const place_id = data.place_id;
         const floors = data.floors;
         const center = data.center;
-        const zoom = data.zoom;
+
         setPlaceName(name);
         setPlaceId(place_id);
+        setAllGeoData(floors || {});
+        setMapCenter(center || [0, 0]);
+        setRooms(data.rooms || []);
+        setDoors(data.doors || []);
+        setCampaignRooms(data.campaigns || []);
+
+        const storeListWithId = (data.rooms || [])
+          .filter(room => room.type === 'room' && room.name)
+          .map(room => ({
+            id: room.id,
+            room_id: room.room_id,
+            name: room.name,
+            floor: room.floor,
+            logo: room.logo,
+            description: room.description,
+            category: room.category,
+            tags: room.tags,
+            website: room.website,
+            phone: room.phone,
+            hours: room.hours,
+            images: room.images,
+            rating: room.rating,
+            coordinates: room.coordinates
+          }));
+        setStoreList(storeListWithId);
+
         if (floors) {
           Object.keys(floors).forEach(floor => {
             const floorNum = parseInt(floor);
