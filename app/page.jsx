@@ -871,6 +871,10 @@ function MapContent() {
           setSelectedStoreForRating(room);
           setShowStoreRating(true);
           
+          // Close other panels to make sure store info is visible
+          setIsDiscoverOpen(false);
+          setIsAssistantOpen(false);
+          
           // Optionally fly to the room
           if (mapRef.current && room.coordinates) {
             mapRef.current.flyTo({
