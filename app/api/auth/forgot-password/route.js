@@ -46,7 +46,12 @@ export async function POST(request) {
       },
     });
 
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim();
+    // Dinamik olarak base URL'i belirle (Env varsa onu kullan, yoksa isteğin geldiği adresi kullan)
+    const host = request.headers.get('host');
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const fallbackUrl = `${protocol}://${host}`;
+    
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || fallbackUrl).trim();
     const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
