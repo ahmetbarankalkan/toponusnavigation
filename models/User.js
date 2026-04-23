@@ -48,6 +48,8 @@ const UserSchema = new mongoose.Schema(
     }],
     favoriteCampaigns: [{
       campaignId: String,
+      storeId: String,
+      storeName: String,
       campaignTitle: String,
       roomData: { type: Object },
       campaignData: { type: Object },

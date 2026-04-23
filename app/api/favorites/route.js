@@ -108,6 +108,7 @@ export async function POST(request) {
           storeId,
           storeName,
           campaignId: storeId,
+          campaignTitle: campaignData?.title,
           roomData,
           campaignData,
           addedDate: new Date()
