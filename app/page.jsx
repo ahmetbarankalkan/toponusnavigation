@@ -882,11 +882,19 @@ function MapContent() {
       }
     }
   }, [storeList]);
+  // Handle targetRoom from URL
   useEffect(() => {
     const targetRoom = searchParams.get('targetRoom');
     const selectStart = searchParams.get('selectStart');
+    
     if (targetRoom && rooms.length > 0) {
-      const room = rooms.find(r => r.id === targetRoom || r.room_id === targetRoom);
+      // Find room by multiple criteria to be safe
+      const room = rooms.find(r => 
+        r.id === targetRoom || 
+        r.room_id === targetRoom || 
+        (r.name && r.name.toLowerCase() === targetRoom.toLowerCase())
+      );
+      
       if (room) {
         if (selectStart === 'true') {
           setSelectedEndRoom(room.id);
@@ -905,14 +913,19 @@ function MapContent() {
           
           // Optionally fly to the room
           if (mapRef.current && room.coordinates) {
-            mapRef.current.flyTo({
-              center: room.coordinates,
-              zoom: 18,
-              duration: 1500
-            });
+            setTimeout(() => {
+              if (mapRef.current) {
+                mapRef.current.flyTo({
+                  center: room.coordinates,
+                  zoom: 18,
+                  duration: 1500
+                });
+              }
+            }, 500);
           }
         }
-        // Clean URL to prevent re-opening
+        
+        // ONLY clean the URL after we successfully found and processed the room
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('targetRoom');
         newUrl.searchParams.delete('selectStart');
