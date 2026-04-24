@@ -1,9 +1,5 @@
-// app/api/places/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Place from "@/models/Place";
-import Room from "@/models/Room";
-import Campaign from "@/models/Campaign";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +11,11 @@ export async function GET(request) {
 
     // MongoDB'ye bağlan
     await connectDB();
+    
+    // Modelleri dinamik olarak yükle (Next.js dev mode hatalarını önlemek için)
+    const Place = require("@/models/Place");
+    const Room = require("@/models/Room");
+    const Campaign = require("@/models/Campaign");
 
     if (slug) {
       console.log(`🔍 Fetching data for slug: ${slug}`);
