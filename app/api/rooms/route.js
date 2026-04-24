@@ -19,8 +19,26 @@ export async function GET(request) {
     // MongoDB'ye bağlan
     await connectDB();
 
+    let queryId = placeId;
+
+    // Eğer gelen ID geçerli bir ObjectId değilse (örneğin 'fallback-ankamall'), 
+    // slug üzerinden gerçek ID'yi bulmaya çalış
+    const mongoose = require("mongoose");
+    if (!mongoose.Types.ObjectId.isValid(placeId)) {
+      console.log(`⚠️ Invalid ObjectId received: ${placeId}, attempting slug lookup...`);
+      const Place = require("@/models/Place");
+      const place = await Place.findOne({ slug: "ankamall" }); // Varsayılan ankamall
+      if (place) {
+        queryId = place._id;
+        console.log(`✅ Found real ID for ankamall: ${queryId}`);
+      } else {
+        // Eğer hiçbir şey bulunamazsa boş dön, çökme
+        return NextResponse.json({});
+      }
+    }
+
     // Place'e ait tüm room'ları getir
-    const rooms = await Room.find({ place_id: placeId });
+    const rooms = await Room.find({ place_id: queryId });
 
 
     // Room'ları kat bazında GeoJSON formatına dönüştür
