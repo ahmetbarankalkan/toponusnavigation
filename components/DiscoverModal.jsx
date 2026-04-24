@@ -211,8 +211,13 @@ export default function DiscoverModal({
                 </div>
               )}
 
+              {/* DEBUG INFO - Sadece Geliştirme Sırasında */}
+              <div className="text-[10px] text-gray-400 mb-2 px-2">
+                Debug: {enrichedRooms.filter(r => r.popular_campaign).length} Popular, {enrichedRooms.filter(r => r.product_campaigns?.length > 0).length} Product
+              </div>
+
               <SubscriptionPopular
-                popularRooms={enrichedRooms.filter(r => r.popular_campaign && (r.popular_campaign.isActive || r.popular_campaign.is_active))}
+                popularRooms={enrichedRooms.filter(r => r.popular_campaign)}
                 onRoomSelect={onRoomSelect}
               />
 
