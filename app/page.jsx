@@ -1787,6 +1787,9 @@ function MapContent() {
           const isCurrentFloor = floorNum === currentFloor;
           const sourceId = `indoor-floor-${floorNum}`;
 
+          // Harita veya stil hazır değilse atla
+          if (!map || !map.getSource) return;
+
           // Kaynak zaten varsa ekleme
           if (map.getSource(sourceId)) return;
 
