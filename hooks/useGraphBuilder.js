@@ -132,19 +132,16 @@ export const useGraphBuilder = () => {
               }
             }
           }
-          let popularCampaign = null;
-          let productCampaigns = [];
-          if (properties.content) {
+          let popularCampaign = properties.popular_campaign || null;
+          let productCampaigns = properties.product_campaigns || [];
+
+          // Fallback for content object if still used
+          if (!popularCampaign && properties.content) {
             try {
-              const content =
-                typeof properties.content === 'string'
-                  ? JSON.parse(properties.content)
-                  : properties.content;
+              const content = typeof properties.content === 'string' ? JSON.parse(properties.content) : properties.content;
               popularCampaign = content.popular_campaign || null;
-              productCampaigns = content.product_campaigns || [];
-            } catch (e) {
-              console.warn(`⚠️ Content parse hatası (${properties.name}):`, e);
-            }
+              if (productCampaigns.length === 0) productCampaigns = content.product_campaigns || [];
+            } catch (e) {}
           }
           const roomData = {
             id: `${floorPrefix}-${properties.id}`,
