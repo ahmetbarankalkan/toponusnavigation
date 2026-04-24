@@ -1505,6 +1505,9 @@ function MapContent() {
     if (!mapCenter || mapCenter[0] === 0 || mapCenter[1] === 0) {
       return;
     }
+    if (!mapContainerRef.current) {
+      return;
+    }
     if (mapRef.current) {
       mapRef.current.setCenter(mapCenter);
       mapRef.current.setZoom(mapZoom);
