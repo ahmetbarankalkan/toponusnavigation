@@ -24,8 +24,8 @@ export async function GET(request) {
     // Eğer gelen ID geçerli bir ObjectId değilse (örneğin 'fallback-ankamall'), 
     // slug üzerinden gerçek ID'yi bulmaya çalış
     const mongoose = require("mongoose");
-    const Campaign = require("../../models/Campaign");
-    const Place = require("../../models/Place");
+    const Campaign = require("../../../models/Campaign");
+    const Place = require("../../../models/Place");
 
     if (!mongoose.Types.ObjectId.isValid(placeId)) {
       console.log(`⚠️ Invalid ObjectId received: ${placeId}, attempting slug lookup...`);
