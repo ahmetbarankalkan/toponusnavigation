@@ -1476,6 +1476,7 @@ function MapContent() {
                 f => f && f.properties && f.properties.id === dbFeature.properties.id
               );
               const mergedProperties = {
+                ...(match?.properties || {}),
                 ...(dbFeature.properties || {}),
               };
               return {

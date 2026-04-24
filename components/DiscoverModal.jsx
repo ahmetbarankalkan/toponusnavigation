@@ -21,6 +21,17 @@ export default function DiscoverModal({
   const [enrichedRooms, setEnrichedRooms] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isOpen && enrichedRooms.length > 0) {
+      console.log("🎁 DiscoverModal Data:", {
+        totalRooms: enrichedRooms.length,
+        withCampaigns: enrichedRooms.filter(r => r.campaigns?.length > 0).length,
+        withProductCampaigns: enrichedRooms.filter(r => r.product_campaigns?.length > 0).length,
+        withPopularCampaign: enrichedRooms.filter(r => r.popular_campaign).length
+      });
+    }
+  }, [isOpen, enrichedRooms]);
+
   // Verileri direkt props'tan al (API zaten zenginleştirilmiş veri gönderiyor)
   useEffect(() => {
     if (!isOpen || !rooms) return;
