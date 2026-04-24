@@ -21,52 +21,11 @@ export default function DiscoverModal({
   const [enrichedRooms, setEnrichedRooms] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // API'den zenginleştirilmiş room verilerini al
+  // Verileri direkt props'tan al (API zaten zenginleştirilmiş veri gönderiyor)
   useEffect(() => {
-    if (!isOpen || !placeId) return;
-
-    const fetchEnrichedData = async () => {
-      setLoading(true);
-      try {
-        if (!placeId) {
-          setEnrichedRooms(rooms);
-          return;
-        }
-
-        // Fetch active campaigns from the new collection
-        const campaignResponse = await fetch(`/api/campaigns?placeId=${placeId}`);
-        const campaignData = await campaignResponse.json();
-        const activeCampaigns = campaignData.success ? campaignData.campaigns : [];
-
-        // Group campaigns by roomId
-        const campaignsByRoom = {};
-        activeCampaigns.forEach(c => {
-          if (!campaignsByRoom[c.roomId]) campaignsByRoom[c.roomId] = [];
-          campaignsByRoom[c.roomId].push(c);
-        });
-
-        // Combine with existing rooms
-        const apiRooms = rooms.map(room => {
-          const roomCampaigns = campaignsByRoom[room.originalId] || [];
-          return {
-            ...room,
-            campaigns: roomCampaigns.filter(c => c.type === 'store'),
-            product_campaigns: roomCampaigns.filter(c => c.type === 'product'),
-            popular_campaign: roomCampaigns.find(c => c.type === 'popular') || room.popular_campaign
-          };
-        });
-
-        setEnrichedRooms(apiRooms);
-      } catch (error) {
-        console.error('Discover data fetch error:', error);
-        setEnrichedRooms(rooms);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEnrichedData();
-  }, [isOpen, placeId, rooms]);
+    if (!isOpen || !rooms) return;
+    setEnrichedRooms(rooms);
+  }, [isOpen, rooms]);
 
   if (!isOpen) return null;
 

@@ -19,8 +19,11 @@ export async function GET(request) {
 
     if (slug) {
       console.log(`🔍 Fetching data for slug: ${slug}`);
-      // Slug ile ara (sadece published olanlar - anasayfa için)
-      const place = await Place.findOne({ slug: slug, status: "published" });
+      // Slug ile ara (Önce published olanı dene, yoksa herhangi birini al)
+      let place = await Place.findOne({ slug: slug, status: "published" });
+      if (!place) {
+        place = await Place.findOne({ slug: slug });
+      }
 
       if (!place) {
         console.log(`❌ Place not found for slug: ${slug}`);
@@ -41,6 +44,21 @@ export async function GET(request) {
       // Odaları frontend formatına çevir ve kampanyaları içine ekle
       const allRooms = rooms.map(room => {
         const roomCampaigns = campaigns.filter(c => c.roomId === room.room_id);
+        
+        // Kampanyaları tiplerine göre ayır ve frontend uyumlu hale getir
+        const storeCampaigns = roomCampaigns
+          .filter(c => c.type === 'store')
+          .map(c => ({ ...c.toObject(), is_active: c.isActive }));
+          
+        const productCampaigns = roomCampaigns
+          .filter(c => c.type === 'product')
+          .map(c => ({ ...c.toObject(), is_active: c.isActive }));
+          
+        const popularCampaign = roomCampaigns.find(c => c.type === 'popular');
+        const formattedPopular = popularCampaign 
+          ? { ...popularCampaign.toObject(), is_active: popularCampaign.isActive } 
+          : null;
+
         return {
           id: room.room_id,
           name: room.name,
@@ -58,7 +76,9 @@ export async function GET(request) {
           special_type: room.content?.special_type,
           rating: room.content?.rating || (4 + Math.random()).toFixed(1),
           header_image: room.content?.header_image,
-          campaigns: roomCampaigns
+          campaigns: storeCampaigns,
+          product_campaigns: productCampaigns,
+          popular_campaign: formattedPopular
         };
       });
 
@@ -68,9 +88,13 @@ export async function GET(request) {
 
       console.log(`✅ Formatted: ${formattedRooms.length} rooms, ${formattedDoors.length} doors`);
 
-      // Kampanyası olan odaları filtrele (Campaigns.jsx için)
-      const campaignRooms = formattedRooms.filter(r => r.campaigns.length > 0);
-      console.log(`📣 Campaign rooms: ${campaignRooms.length}`);
+      // Herhangi bir kampanyası olan odaları filtrele (Keşfet paneli için)
+      const campaignRooms = formattedRooms.filter(r => 
+        (r.campaigns && r.campaigns.length > 0) || 
+        (r.product_campaigns && r.product_campaigns.length > 0) || 
+        (r.popular_campaign)
+      );
+      console.log(`📣 Campaign rooms found for Discover: ${campaignRooms.length}`);
 
       // Anasayfa için uyumlu format
       const responseData = {
@@ -82,7 +106,7 @@ export async function GET(request) {
         rooms: formattedRooms,
         doors: formattedDoors,
         campaigns: campaignRooms,
-        server_time: new Date().toISOString() // Tazelik kontrolü için
+        server_time: new Date().toISOString()
       };
 
       // CACHE KONTROLÜ: Kesinlikle cache'leme
