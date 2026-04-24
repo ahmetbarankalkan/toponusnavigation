@@ -80,10 +80,17 @@ export async function GET(request) {
         zoom: place.zoom,
         rooms: formattedRooms,
         doors: formattedDoors,
-        campaigns: campaignRooms
+        campaigns: campaignRooms,
+        server_time: new Date().toISOString() // Tazelik kontrolü için
       };
 
-      return NextResponse.json(responseData);
+      // CACHE KONTROLÜ: Kesinlikle cache'leme
+      const response = NextResponse.json(responseData);
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      response.headers.set("Pragma", "no-cache");
+      response.headers.set("Expires", "0");
+
+      return response;
     } else if (id) {
       // ID ile ara
       const place = await Place.findById(id);
