@@ -21,17 +21,6 @@ export default function DiscoverModal({
   const [enrichedRooms, setEnrichedRooms] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && enrichedRooms.length > 0) {
-      console.log("🎁 DiscoverModal Data:", {
-        totalRooms: enrichedRooms.length,
-        withCampaigns: enrichedRooms.filter(r => r.campaigns?.length > 0).length,
-        withProductCampaigns: enrichedRooms.filter(r => r.product_campaigns?.length > 0).length,
-        withPopularCampaign: enrichedRooms.filter(r => r.popular_campaign).length
-      });
-    }
-  }, [isOpen, enrichedRooms]);
-
   // Verileri direkt props'tan al (API zaten zenginleştirilmiş veri gönderiyor)
   useEffect(() => {
     if (!isOpen || !rooms) return;
@@ -210,11 +199,6 @@ export default function DiscoverModal({
                    <p className="text-[#00334e] text-sm mt-4 font-semibold font-poppins">Kampanyalar yükleniyor...</p>
                 </div>
               )}
-
-              {/* DEBUG INFO - Sadece Geliştirme Sırasında */}
-              <div className="text-[10px] text-gray-400 mb-2 px-2">
-                Debug: {enrichedRooms.filter(r => r.popular_campaign).length} Popular, {enrichedRooms.filter(r => r.product_campaigns?.length > 0).length} Product
-              </div>
 
               <SubscriptionPopular
                 popularRooms={enrichedRooms.filter(r => r.popular_campaign)}
