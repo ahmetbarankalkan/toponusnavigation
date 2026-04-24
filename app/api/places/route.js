@@ -12,10 +12,10 @@ export async function GET(request) {
     // MongoDB'ye bağlan
     await connectDB();
     
-    // Modelleri dinamik olarak yükle (Next.js dev mode hatalarını önlemek için)
-    const Place = require("@/models/Place");
-    const Room = require("@/models/Room");
-    const Campaign = require("@/models/Campaign");
+    // Modelleri dinamik olarak yükle (Relative path kullanarak hata riskini bitiriyoruz)
+    const Place = require("../../models/Place");
+    const Room = require("../../models/Room");
+    const Campaign = require("../../models/Campaign");
 
     if (slug) {
       console.log(`🔍 Fetching data for slug: ${slug}`);
