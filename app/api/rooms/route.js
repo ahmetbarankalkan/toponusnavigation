@@ -24,22 +24,25 @@ export async function GET(request) {
     // Eğer gelen ID geçerli bir ObjectId değilse (örneğin 'fallback-ankamall'), 
     // slug üzerinden gerçek ID'yi bulmaya çalış
     const mongoose = require("mongoose");
+    const Campaign = require("@/models/Campaign");
+    const Place = require("@/models/Place");
+
     if (!mongoose.Types.ObjectId.isValid(placeId)) {
       console.log(`⚠️ Invalid ObjectId received: ${placeId}, attempting slug lookup...`);
-      const Place = require("@/models/Place");
       const place = await Place.findOne({ slug: "ankamall" }); // Varsayılan ankamall
       if (place) {
         queryId = place._id;
         console.log(`✅ Found real ID for ankamall: ${queryId}`);
       } else {
-        // Eğer hiçbir şey bulunamazsa boş dön, çökme
         return NextResponse.json({});
       }
     }
 
-    // Place'e ait tüm room'ları getir
-    const rooms = await Room.find({ place_id: queryId });
-
+    // Place'e ait tüm room'ları ve kampanyaları getir
+    const [rooms, campaigns] = await Promise.all([
+      Room.find({ place_id: queryId }),
+      Campaign.find({ placeId: queryId.toString(), isActive: true })
+    ]);
 
     // Room'ları kat bazında GeoJSON formatına dönüştür
     const roomsByFloor = {};
@@ -54,6 +57,13 @@ export async function GET(request) {
         };
       }
 
+      // Kampanyaları odayla eşleştir
+      const roomCampaigns = campaigns.filter(c => c.roomId === room.room_id);
+      const storeCampaigns = roomCampaigns.filter(c => c.type === 'store').map(c => ({ ...c.toObject(), is_active: c.isActive }));
+      const productCampaigns = roomCampaigns.filter(c => c.type === 'product').map(c => ({ ...c.toObject(), is_active: c.isActive }));
+      const popularCampaign = roomCampaigns.find(c => c.type === 'popular');
+      const formattedPopular = popularCampaign ? { ...popularCampaign.toObject(), is_active: popularCampaign.isActive } : null;
+
       // Room'u GeoJSON feature olarak ekle
       roomsByFloor[floor].features.push({
         type: "Feature",
@@ -62,7 +72,7 @@ export async function GET(request) {
           id: room.room_id,
           name: room.name,
           floor: room.floor,
-          type: room.content?.type || "room", // DB'den al, yoksa default "room"
+          type: room.content?.type || "room",
           category: room.content?.category || "general",
           subtype: room.content?.subtype || "",
           icon: room.content?.icon || "",
@@ -80,15 +90,13 @@ export async function GET(request) {
           twitter: room.content?.twitter || "",
           services: room.content?.services || "",
           tags: room.content?.tags || "",
+          rating: room.content?.rating || (4 + Math.random()).toFixed(1),
           
-          // Kampanya/İndirim Bilgileri
-          campaigns: room.content?.campaigns || [],
-          active_campaigns: room.content?.campaigns?.filter(c => c.is_active && 
-            (!c.end_date || new Date(c.end_date) > new Date())) || [],
-          
-          // Popüler Yerler ve Ürün Kampanyaları
-          popular_campaign: room.content?.popular_campaign || null,
-          product_campaigns: room.content?.product_campaigns || [],
+          // Zenginleştirilmiş Kampanya Bilgileri
+          campaigns: storeCampaigns,
+          active_campaigns: storeCampaigns,
+          product_campaigns: productCampaigns,
+          popular_campaign: formattedPopular
         },
       });
     });
