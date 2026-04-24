@@ -17,18 +17,25 @@ export async function GET(request) {
     await connectDB();
 
     if (slug) {
+      console.log(`🔍 Fetching data for slug: ${slug}`);
       // Slug ile ara (sadece published olanlar - anasayfa için)
       const place = await Place.findOne({ slug: slug, status: "published" });
 
       if (!place) {
+        console.log(`❌ Place not found for slug: ${slug}`);
         return NextResponse.json({ error: "Place bulunamadı", slug: slug }, { status: 404 });
       }
+
+      console.log(`📍 Place found: ${place.name} (${place._id})`);
 
       // Bu mekana ait tüm odaları ve kampanyaları getir
       const [rooms, campaigns] = await Promise.all([
         Room.find({ place_id: place._id }),
         Campaign.find({ placeId: place._id.toString(), isActive: true })
       ]);
+
+      console.log(`🏢 Rooms found: ${rooms.length}`);
+      console.log(`🎁 Campaigns found: ${campaigns.length}`);
 
       // Odaları frontend formatına çevir ve kampanyaları içine ekle
       const allRooms = rooms.map(room => {
@@ -58,8 +65,11 @@ export async function GET(request) {
       const formattedRooms = allRooms.filter(r => r.type !== 'door');
       const formattedDoors = allRooms.filter(r => r.type === 'door');
 
+      console.log(`✅ Formatted: ${formattedRooms.length} rooms, ${formattedDoors.length} doors`);
+
       // Kampanyası olan odaları filtrele (Campaigns.jsx için)
       const campaignRooms = formattedRooms.filter(r => r.campaigns.length > 0);
+      console.log(`📣 Campaign rooms: ${campaignRooms.length}`);
 
       // Anasayfa için uyumlu format
       const responseData = {
@@ -73,10 +83,7 @@ export async function GET(request) {
         campaigns: campaignRooms
       };
 
-      // CACHE KONTROLÜ
-      const response = NextResponse.json(responseData);
-      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-      return response;
+      return NextResponse.json(responseData);
     } else if (id) {
       // ID ile ara
       const place = await Place.findById(id);
