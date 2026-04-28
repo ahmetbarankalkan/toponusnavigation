@@ -2,8 +2,26 @@
  * Gelişmiş Rotalama Algoritmaları
  * Spor ve Keşfet modları için özel rotalama
  */
-
 import { singleFloorDijkstra, multiFloorDijkstra, calculatePathDistance } from './dijkstra';
+
+// Yardımcı: Türkçe karakter sorunlarını çözen string normalize edici
+export const normalizeStr = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/İ/g, 'i')
+    .replace(/I/g, 'ı')
+    .replace(/Ş/g, 's')
+    .replace(/ş/g, 's')
+    .replace(/Ğ/g, 'g')
+    .replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'u')
+    .replace(/ü/g, 'u')
+    .replace(/Ö/g, 'o')
+    .replace(/ö/g, 'o')
+    .replace(/Ç/g, 'c')
+    .replace(/ç/g, 'c')
+    .toLowerCase();
+};
 
 /**
  * Gelişmiş rota hesaplama - mod bazlı
@@ -14,6 +32,9 @@ import { singleFloorDijkstra, multiFloorDijkstra, calculatePathDistance } from '
  * @param {string} preferredTransport - Tercih edilen transport
  * @param {Object} allGeoData - GeoJSON verileri
  * @param {string} placeId - Yer ID'si
+ * @param {Array} skippedWaypoints - Atlanan noktalar
+ * @param {Object} userFavorites - Kullanıcı favorileri
+ * @param {Array} rooms - Mağaza/oda verileri
  * @returns {Array} Rota node ID'leri
  */
 export async function calculateAdvancedRoute(
@@ -23,7 +44,11 @@ export async function calculateAdvancedRoute(
   mode = 'basit',
   preferredTransport,
   allGeoData,
-  placeId
+  placeId,
+  skippedWaypoints = [],
+  userFavorites = null,
+  rooms = [],
+  allCampaigns = []
 ) {
   // Sadece önemli logları tut
   if (mode !== 'basit') {
@@ -35,11 +60,13 @@ export async function calculateAdvancedRoute(
     const startFloor = graph[startId]?.floor;
     const endFloor = graph[endId]?.floor;
     
+    let path = [];
     if (startFloor === endFloor) {
-      return singleFloorDijkstra(startId, endId, graph);
+      path = singleFloorDijkstra(startId, endId, graph);
     } else {
-      return multiFloorDijkstra(startId, endId, graph, preferredTransport, allGeoData);
+      path = multiFloorDijkstra(startId, endId, graph, preferredTransport, allGeoData);
     }
+    return { path, targets: [] };
   }
 
   // Spor ve Keşfet modları için özel algoritma
@@ -55,13 +82,13 @@ export async function calculateAdvancedRoute(
       
       // 50m'den kısa rotalar için spor modu gereksiz
       if (normalDistance < 50) {
-        return normalPath;
+        return { path: normalPath, targets: [] };
       }
     } else {
       // Farklı katlar arası - kat farkı 1'den fazlaysa spor modu gereksiz
       const floorDifference = Math.abs(endFloor - startFloor);
       if (floorDifference > 1) {
-        return multiFloorDijkstra(startId, endId, graph, preferredTransport, allGeoData);
+        return { path: multiFloorDijkstra(startId, endId, graph, preferredTransport, allGeoData), targets: [] };
       }
     }
     
@@ -72,12 +99,16 @@ export async function calculateAdvancedRoute(
       mode,
       preferredTransport,
       allGeoData,
-      placeId
+      placeId,
+      skippedWaypoints,
+      userFavorites,
+      rooms,
+      allCampaigns
     );
   }
 
   // Fallback
-  return singleFloorDijkstra(startId, endId, graph);
+  return { path: singleFloorDijkstra(startId, endId, graph), targets: [] };
 }
 
 /**
@@ -90,18 +121,186 @@ async function calculateSpecialRoute(
   mode,
   preferredTransport,
   allGeoData,
-  placeId
+  placeId,
+  skippedWaypoints = [],
+  userFavorites = null,
+  rooms = [],
+  allCampaigns = []
 ) {
   const startFloor = graph[startId]?.floor;
   const endFloor = graph[endId]?.floor;
 
-  // Hedef mağazaları yükle
-  const targetStores = await loadTargetStores(placeId, mode);
+  // Hedef mağazaları yükle: Keşfet modunda tüm kampanyaları baz al, spor modunda sadece popülerleri
+  let targetStores = [];
+  if (mode === 'keşfet' && allCampaigns && allCampaigns.length > 0) {
+    targetStores = allCampaigns.map(c => ({
+      ...c,
+      room_id: c.room_id || c.id
+    }));
+  } else {
+    targetStores = await loadTargetStores(placeId, mode);
+  }
   
+  // KİŞİSELLEŞTİRME: Favori mağazaları, kampanyaları ve ürünleri hedef olarak ekle
+  if (mode === 'keşfet' && userFavorites) {
+    console.log("🧩 Personalization: Merging favorites into target pool...");
+    
+    // Yardımcı: Odadan kat ve veri bul
+    const findRoomData = (storeId, name) => {
+      const sId = normalizeStr(storeId);
+      const sName = normalizeStr(name);
+      return rooms.find(r => 
+        (r.room_id && normalizeStr(r.room_id) === sId) ||
+        (r.id && normalizeStr(r.id) === sId) ||
+        (r.name && normalizeStr(r.name) === sName) ||
+        (r.originalId && normalizeStr(r.originalId) === sId)
+      );
+    };
+
+    // 1. Favori Mağazalar
+    if (userFavorites.favorites && userFavorites.favorites.length > 0) {
+      userFavorites.favorites.forEach(fav => {
+        const favStoreId = normalizeStr(fav.storeId);
+        const favId = normalizeStr(fav.id);
+        const favName = normalizeStr(fav.storeName);
+
+        const existingIdx = targetStores.findIndex(s => 
+          normalizeStr(s.room_id) === favStoreId || 
+          normalizeStr(s.id) === favId ||
+          (favName && normalizeStr(s.name) === favName)
+        );
+
+        if (existingIdx === -1) {
+          const roomData = findRoomData(fav.storeId, fav.storeName);
+          if (roomData) {
+            targetStores.push({
+              id: fav.id || `fav-store-${favStoreId}`,
+              room_id: roomData.room_id || fav.storeId,
+              floor: roomData.floor,
+              name: roomData.name || fav.storeName,
+              category: roomData.category || fav.category,
+              logo: roomData.logo,
+              popular_campaign: {
+                title: 'Favori Mağazanız',
+                description: 'Sizin için seçtiğimiz favori mekanınız.',
+                is_active: true
+              },
+              is_favorite_target: true
+            });
+          }
+        } else {
+          targetStores[existingIdx].is_favorite_target = true;
+        }
+      });
+    }
+
+    // 2. Favori Kampanyalar
+    if (userFavorites.campaigns && userFavorites.campaigns.length > 0) {
+      userFavorites.campaigns.forEach(camp => {
+        const campStoreId = normalizeStr(camp.storeId || camp.roomData?.room_id || camp.roomData?.id);
+        const campId = normalizeStr(camp.id || camp.campaignId);
+        const campName = normalizeStr(camp.storeName);
+        
+        const existingIdx = targetStores.findIndex(s => 
+          (campStoreId && normalizeStr(s.room_id) === campStoreId) || 
+          (campId && normalizeStr(s.id) === campId) ||
+          (campName && normalizeStr(s.name) === campName)
+        );
+
+        if (existingIdx === -1) {
+          const roomData = findRoomData(camp.storeId, camp.storeName);
+          if (roomData) {
+            targetStores.push({
+              id: camp.id || `fav-camp-${campId}`,
+              room_id: roomData.room_id || camp.storeId,
+              floor: roomData.floor,
+              name: roomData.name || camp.storeName,
+              category: roomData.category || camp.category,
+              logo: roomData.logo,
+              popular_campaign: {
+                title: camp.title || camp.campaignTitle || 'Favori Kampanya',
+                description: camp.description || 'İlgilendiğiniz güncel fırsat.',
+                is_active: true
+              },
+              is_favorite_target: true
+            });
+          }
+        } else {
+          targetStores[existingIdx].is_favorite_target = true;
+          // UI'da doğru gözükmesi için kampanya bilgisini güncelle
+          if (camp.title || camp.campaignTitle) {
+            targetStores[existingIdx].popular_campaign = {
+              title: camp.title || camp.campaignTitle || 'Favori Kampanya',
+              description: camp.description || 'İlgilendiğiniz güncel fırsat.',
+              is_active: true
+            };
+          }
+        }
+      });
+    }
+
+    // 3. Favori Ürünler
+    if (userFavorites.products && userFavorites.products.length > 0) {
+      userFavorites.products.forEach(prod => {
+        const prodStoreId = normalizeStr(prod.storeId || prod.productData?.storeId);
+        const prodName = normalizeStr(prod.storeName);
+        
+        const existingIdx = targetStores.findIndex(s => 
+          (prodStoreId && normalizeStr(s.room_id) === prodStoreId) ||
+          (prodName && normalizeStr(s.name) === prodName)
+        );
+
+        if (existingIdx === -1) {
+          const roomData = findRoomData(prod.storeId, prod.storeName);
+          if (roomData) {
+            targetStores.push({
+              id: prod.id || `fav-prod-${prodStoreId}`,
+              room_id: roomData.room_id || prod.storeId,
+              floor: roomData.floor,
+              name: roomData.name || prod.storeName,
+              category: roomData.category || prod.category,
+              logo: roomData.logo,
+              popular_campaign: {
+                title: prod.name || prod.productName || 'Favori Ürün',
+                description: 'Favori ürünlerinizin bulunduğu mağaza.',
+                is_active: true
+              },
+              is_favorite_target: true
+            });
+          }
+        } else {
+          targetStores[existingIdx].has_favorite_product = true;
+          // UI'da ürünün gözükmesi için kampanya bilgisini güncelle
+          if (prod.name || prod.productName) {
+            targetStores[existingIdx].popular_campaign = {
+              title: prod.name || prod.productName || 'Favori Ürün',
+              description: 'Favori ürünlerinizin bulunduğu mağaza.',
+              is_active: true
+            };
+          }
+        }
+      });
+    }
+  }
+
+  if (skippedWaypoints && skippedWaypoints.length > 0) {
+    console.log(`⏩ Skipping ${skippedWaypoints.length} waypoints:`, skippedWaypoints);
+    const skippedSet = new Set(skippedWaypoints.map(w => w ? String(w).replace(/^f\d+-/, '').replace(/^room-/, '') : null).filter(Boolean));
+    
+    targetStores = targetStores.filter(store => {
+      const sId = store.id ? String(store.id).replace(/^f\d+-/, '').replace(/^room-/, '') : null;
+      const sRoomId = store.room_id ? String(store.room_id).replace(/^f\d+-/, '').replace(/^room-/, '') : null;
+      return !skippedSet.has(sId) && !skippedSet.has(sRoomId);
+    });
+  }
+  
+  console.log(`🎯 Total candidate stores for route: ${targetStores.length}`);
+
   if (targetStores.length === 0) {
-    return startFloor === endFloor 
+    const path = startFloor === endFloor 
       ? singleFloorDijkstra(startId, endId, graph)
       : multiFloorDijkstra(startId, endId, graph, preferredTransport, allGeoData);
+    return { path, targets: [] };
   }
 
   // Tek kat rotası
@@ -112,7 +311,8 @@ async function calculateSpecialRoute(
       graph,
       mode,
       targetStores,
-      startFloor
+      startFloor,
+      userFavorites
     );
   }
 
@@ -124,19 +324,32 @@ async function calculateSpecialRoute(
     mode,
     preferredTransport,
     allGeoData,
-    targetStores
+    targetStores,
+    userFavorites
   );
 }
 
 /**
  * Tek kat özel rota hesaplama
  */
-function calculateSingleFloorSpecialRoute(startId, endId, graph, mode, targetStores, floor) {
-  // Bu kattaki hedef mağazaları filtrele
-  const floorTargets = targetStores.filter(store => store.floor === floor);
+function calculateSingleFloorSpecialRoute(
+  startId, 
+  endId, 
+  graph, 
+  mode, 
+  targetStores, 
+  floor, 
+  userFavorites = null
+) {
+  // Keşfet modunda diğer katlardaki favorileri de görebilmek için tüm mağazaları al, spor modunda sadece bu kat
+  const floorTargets = mode === 'keşfet' 
+    ? targetStores 
+    : targetStores.filter(store => store.floor !== undefined && Number(store.floor) === Number(floor));
+
+  console.log(`🏢 Single Floor Routing: Evaluating ${floorTargets.length}/${targetStores.length} targets.`);
 
   if (floorTargets.length === 0) {
-    return singleFloorDijkstra(startId, endId, graph);
+    return { path: singleFloorDijkstra(startId, endId, graph), targets: [] };
   }
 
   // En uygun mağazaları seç
@@ -145,15 +358,17 @@ function calculateSingleFloorSpecialRoute(startId, endId, graph, mode, targetSto
     endId,
     floorTargets,
     graph,
-    mode
+    mode,
+    userFavorites
   );
 
   if (selectedTargets.length === 0) {
-    return singleFloorDijkstra(startId, endId, graph);
+    return { path: singleFloorDijkstra(startId, endId, graph), targets: [] };
   }
 
   // Mağazalar üzerinden geçen rota oluştur
-  return buildRouteWithTargets(startId, endId, selectedTargets, graph);
+  const { fullPath, optimizedTargets } = buildRouteWithTargets(startId, endId, selectedTargets, graph);
+  return { path: fullPath, targets: optimizedTargets };
 }
 
 /**
@@ -166,7 +381,8 @@ async function calculateMultiFloorSpecialRoute(
   mode,
   preferredTransport,
   allGeoData,
-  targetStores
+  targetStores,
+  userFavorites = null
 ) {
   const startFloor = graph[startId]?.floor;
   const endFloor = graph[endId]?.floor;
@@ -186,6 +402,7 @@ async function calculateMultiFloorSpecialRoute(
 
   let fullPath = [];
   let currentNodeId = startId;
+  let allSelectedTargets = [];
 
   for (let i = 0; i < floors.length; i++) {
     const currentFloor = floors[i];
@@ -202,13 +419,15 @@ async function calculateMultiFloorSpecialRoute(
           endId,
           floorTargets, // Sadece bu kattaki mağazalar
           graph,
-          mode
+          mode,
+          userFavorites
         );
         
         if (selectedTargets.length > 0) {
-          const pathWithTargets = buildRouteWithTargets(currentNodeId, endId, selectedTargets, graph);
+          const { fullPath: pathWithTargets, optimizedTargets } = buildRouteWithTargets(currentNodeId, endId, selectedTargets, graph);
           if (pathWithTargets.length > 0) {
             fullPath = [...fullPath, ...pathWithTargets.slice(1)]; // İlk node'u çıkar (duplicate)
+            allSelectedTargets = [...allSelectedTargets, ...optimizedTargets];
             break;
           }
         }
@@ -231,28 +450,33 @@ async function calculateMultiFloorSpecialRoute(
     
     if (connectors.length === 0) {
       // Fallback: Normal multi-floor algoritması
-      return multiFloorDijkstra(currentNodeId, endId, graph, preferredTransport, allGeoData);
+      return { path: multiFloorDijkstra(currentNodeId, endId, graph, preferredTransport, allGeoData), targets: allSelectedTargets };
     }
 
     // En yakın connector'ı seç
     let bestConnectorPath = null;
+    let bestTargetsOnThisFloor = [];
     let minDistance = Infinity;
 
     for (const connector of connectors) {
       let pathToConnector;
+      let currentConnectorTargets = [];
       
       if (floorTargets.length > 0) {
         // Hedef mağazalar varsa onlar üzerinden geç - SADECE BU KATTAKILER
-        const selectedTargets = selectOptimalTargets(
+        currentConnectorTargets = selectOptimalTargets(
           currentNodeId,
           connector.entry,
           floorTargets, // Sadece bu kattaki mağazalar
           graph,
-          mode
+          mode,
+          userFavorites
         );
         
-        if (selectedTargets.length > 0) {
-          pathToConnector = buildRouteWithTargets(currentNodeId, connector.entry, selectedTargets, graph);
+        if (currentConnectorTargets.length > 0) {
+          const { fullPath: p, optimizedTargets: t } = buildRouteWithTargets(currentNodeId, connector.entry, currentConnectorTargets, graph);
+          pathToConnector = p;
+          currentConnectorTargets = t;
         } else {
           pathToConnector = singleFloorDijkstra(currentNodeId, connector.entry, graph);
         }
@@ -268,14 +492,18 @@ async function calculateMultiFloorSpecialRoute(
             path: pathToConnector,
             exit: connector.exit,
           };
+          bestTargetsOnThisFloor = currentConnectorTargets;
         }
       }
     }
 
     if (!bestConnectorPath) {
       // Fallback
-      return multiFloorDijkstra(currentNodeId, endId, graph, preferredTransport, allGeoData);
+      return { path: multiFloorDijkstra(currentNodeId, endId, graph, preferredTransport, allGeoData), targets: allSelectedTargets };
     }
+
+    // Hedefleri asıl listeye ekle
+    allSelectedTargets = [...allSelectedTargets, ...bestTargetsOnThisFloor];
 
     // Path'i ekle
     if (fullPath.length === 0) {
@@ -288,8 +516,7 @@ async function calculateMultiFloorSpecialRoute(
     fullPath.push(bestConnectorPath.exit);
     currentNodeId = bestConnectorPath.exit;
   }
-
-  return fullPath;
+  return { path: fullPath, targets: allSelectedTargets };
 }
 
 /**
@@ -329,7 +556,7 @@ async function loadTargetStores(placeId, mode) {
 /**
  * En uygun hedef mağazaları seç - Akıllı kat filtreleme ile
  */
-function selectOptimalTargets(startId, endId, targets, graph, mode) {
+function selectOptimalTargets(startId, endId, targets, graph, mode, userFavorites = null) {
   const startFloor = graph[startId]?.floor;
   const endFloor = graph[endId]?.floor;
 
@@ -366,15 +593,16 @@ function selectOptimalTargets(startId, endId, targets, graph, mode) {
   const targetDistances = [];
 
   for (const target of relevantTargets) {
-    let targetNodeId = `f${target.floor}-${target.room_id}`;
+    const cleanRoomId = String(target.room_id || target.id || '').replace('room-', '');
+    let targetNodeId = `f${target.floor}-${target.room_id || target.id}`;
     
     if (!graph[targetNodeId]) {
       // Alternatif formatları dene
       const alternatives = [
-        `f${target.floor}-${target.room_id}`,
-        `${target.room_id}`,
-        `f${target.floor}-door-${target.room_id.replace('room-', '')}`,
-        `f${target.floor}-${target.room_id.replace('room-', '')}`
+        `f${target.floor}-${target.room_id || target.id}`,
+        `${target.room_id || target.id}`,
+        `f${target.floor}-door-${cleanRoomId}`,
+        `f${target.floor}-${cleanRoomId}`
       ];
       
       let foundNode = null;
@@ -445,6 +673,18 @@ function selectOptimalTargets(startId, endId, targets, graph, mode) {
         totalDistance: estimatedDistanceToTarget + distanceFromTarget,
         priority: 2, // Hedef kattakiler ikinci öncelik
       });
+    } else if (mode === 'keşfet') {
+      // Ne başlangıç ne de bitiş katında olan (başka bir kattaki) favorileri ve kampanyaları ekle
+      const estimatedDistance = Math.abs(Number(target.floor) - Number(startFloor)) * 150 + 100;
+      targetDistances.push({
+        target,
+        nodeId: targetNodeId,
+        distanceToTarget: estimatedDistance,
+        distanceFromTarget: estimatedDistance,
+        totalDistance: estimatedDistance * 2,
+        naturalness: 0,
+        priority: 3,
+      });
     }
   }
 
@@ -473,34 +713,42 @@ function selectOptimalTargets(startId, endId, targets, graph, mode) {
       return [];
     }
 
-    // 2. Efficiency score hesapla - SIKI PUANLAMA
-    const scoredTargets = noBacktrackTargets.map(target => {
-      // Detour maliyeti = (spor mağazası rotası - normal rota)
+    // 2. Efficiency score hesapla - FAVORİLER İÇİN ESNEK
+    const scoredTargets = reasonableTargets.map(target => {
       const detourCost = target.totalDistance - normalDistance;
       
-      // Sıkı efficiency hesaplama - sadece çok yakın olanlar kabul
+      const isFavorite = target.target.is_favorite_target || target.target.has_favorite_product;
+
+      // Favoriler için geri dönüş filtresini esnet veya kaldır
+      const noBacktrackTargets = isFavorite 
+        ? [target] // Favoriyse backtracking filtresini atla
+        : filterNoBacktrackTargets(startId, endId, [target], graph);
+      
+      const isValid = noBacktrackTargets.length > 0;
+      if (!isValid) return { ...target, score: -1000, isValid: false };
+
       let efficiency;
       if (detourCost <= 15) {
-        efficiency = 10; // Çok az detour = mükemmel
+        efficiency = 10;
       } else if (detourCost <= 30) {
-        efficiency = 6; // Az detour = iyi
+        efficiency = 6;
       } else if (detourCost <= 50) {
-        efficiency = 3; // Orta detour = zayıf
+        efficiency = 3;
       } else {
-        efficiency = 1; // Fazla detour = çok zayıf
+        efficiency = 1;
       }
       
-      // Rotaya uygunluk bonusu - normal rotanın üzerinde olanlar
-      const onRouteBonus = detourCost <= 20 ? 5 : 0; // Rotaya çok yakın olanlar bonus
+      const onRouteBonus = detourCost <= 20 ? 5 : 0;
       
       return {
         ...target,
         detourCost,
         efficiency,
-        onRoute: detourCost <= 20, // Rotaya uygun mu?
-        score: efficiency + onRouteBonus
+        onRoute: detourCost <= 20,
+        isValid: true,
+        score: efficiency + onRouteBonus + (isFavorite ? 50 : 0) // Favoriye ek avantaj
       };
-    });
+    }).filter(t => t.isValid);
 
     // 3. Score'a göre sırala (yüksek score = daha iyi)
     scoredTargets.sort((a, b) => b.score - a.score);
@@ -525,9 +773,146 @@ function selectOptimalTargets(startId, endId, targets, graph, mode) {
     return selected;
   }
 
-  // Keşfet modu: Maksimum 3 mağaza, popüler olanları tercih et
+  // Keşfet modu: Maksimum 3 mağaza, popüler ve KİŞİSELLEŞTİRİLMİŞ olanları tercih et
   if (mode === 'keşfet') {
-    return targetDistances.slice(0, 3);
+    const scoredKeşfet = targetDistances.map((item, i) => {
+      let relevanceScore = 0;
+      
+      if (userFavorites) {
+        const { favorites = [], campaigns = [], products = [] } = userFavorites;
+        
+        const targetRoomId = String(item.target.room_id || '').toLowerCase();
+        const targetId = String(item.target.id || '').toLowerCase();
+        const targetCategory = String(item.target.category || '').toLowerCase();
+        const targetName = String(item.target.name || '').toLowerCase();
+
+        if (i === 0) {
+          console.log(`🔍 Keşfet Modu: ${targetDistances.length} potansiyel hedef inceleniyor...`);
+        }
+
+        // 0. Kullanılmışlık Kontrolü
+        const isUsed = campaigns.some(c => 
+          (String(c.id).toLowerCase() === targetId || String(c.campaignId).toLowerCase() === targetId || String(c.storeId).toLowerCase() === targetRoomId) && c.is_used
+        );
+        
+        if (isUsed) return { ...item, relevanceScore: -1, finalScore: -1000 };
+
+        // 1. Favori Mağaza Kontrolü (+250) - ÇOK GÜÇLÜ EŞLEŞME
+        const isFavStore = favorites.some(f => {
+          const favStoreId = String(f.storeId || '').toLowerCase();
+          const favId = String(f.id || '').toLowerCase();
+          const favRoomId = String(f.roomData?.id || f.roomData?.room_id || '').toLowerCase();
+          
+          return (
+            favStoreId === targetRoomId || 
+            favId === targetId ||
+            favRoomId === targetRoomId ||
+            favStoreId === targetId ||
+            targetName.includes(normalizeStr(f.storeName)) ||
+            normalizeStr(f.storeName) === targetName
+          );
+        });
+        if (isFavStore) relevanceScore += 250;
+        
+        // 2. Favori Kampanya Kontrolü (+200)
+        const isFavCampaign = campaigns.some(c => {
+          const favCId = normalizeStr(c.id || c.campaignId);
+          const favCStoreId = normalizeStr(c.storeId);
+          return favCId === targetId || favCStoreId === targetRoomId;
+        });
+        if (isFavCampaign) relevanceScore += 200;
+        
+        // 3. Favori Ürün Barındıran Mağaza (+150)
+        const hasFavProduct = products.some(p => {
+          const pStoreId = normalizeStr(p.storeId || p.productData?.storeId);
+          const pStoreName = normalizeStr(p.storeName);
+          return pStoreId === targetRoomId || (pStoreName && pStoreName === targetName);
+        });
+        if (hasFavProduct) relevanceScore += 150;
+        
+        // 4. AI MANTIĞI: İlgili Kategoriler ve Benzerlik (+80)
+        const userFavCategories = [
+          ...favorites.map(f => f.roomData?.category || f.category),
+          ...campaigns.map(c => c.category || c.roomData?.category),
+          ...products.map(p => p.category || p.roomData?.category)
+        ].map(cat => normalizeStr(cat)).filter(Boolean);
+        
+        const relatedCategoryMap = {
+          'moda': ['ayakkabi', 'aksesuar', 'canta', 'kozmetik', 'giyim', 'taki'],
+          'teknoloji': ['elektronik', 'beyaz esya', 'telefon', 'bilgisayar', 'aksesuar'],
+          'yeme-icme': ['restoran', 'kafe', 'tatli', 'fast-food', 'market'],
+          'kozmetik': ['guzellik', 'bakim', 'parfum', 'moda', 'kisisel bakim'],
+          'ev-yasam': ['mobilya', 'dekorasyon', 'zuccaciye', 'beyaz esya', 'market'],
+          'spor': ['outdoor', 'fitness', 'ayakkabi', 'moda', 'giyim'],
+          'market': ['supermarket', 'gida', 'kisisel bakim', 'ev-yasam', 'kozmetik'],
+          'kisisel bakim': ['kozmetik', 'bakim', 'guzellik', 'market']
+        };
+
+        userFavCategories.forEach(cat => {
+          if (cat === targetCategory) {
+            relevanceScore += 80;
+          } else if (relatedCategoryMap[cat]?.includes(targetCategory)) {
+            relevanceScore += 40; 
+          }
+        });
+
+        // İsim bazlı benzerlik (Tüm favori tiplerinden isimleri topla)
+        const allFavNames = [
+          ...favorites.map(f => normalizeStr(f.storeName)),
+          ...campaigns.map(c => normalizeStr(c.storeName)),
+          ...products.map(p => normalizeStr(p.storeName))
+        ].filter(Boolean);
+        
+        if (allFavNames.some(name => targetName.includes(name) || name.includes(targetName))) {
+          relevanceScore += 120; 
+        }
+
+        // 5. DOĞRUDAN FAVORİ ETİKETİ KONTROLÜ (Garantili Bonus)
+        if (item.target.is_favorite_target) relevanceScore += 300;
+        if (item.target.has_favorite_product) relevanceScore += 200;
+
+        if (relevanceScore > 0) {
+          console.log(`🤖 [AI Score] ${item.target.name}: ${relevanceScore} (Favori: ${item.target.is_favorite_target})`);
+        }
+      }
+
+      // Final Skoru: (Alaka Puanı * 10) - (Mesafe / 5)
+      // Bu sayede çok yakın olmayan ama alakalı olan mağazalar öne çıkar
+      return {
+        ...item,
+        relevanceScore,
+        finalScore: (relevanceScore * 10) - (item.totalDistance / 5)
+      };
+    });
+
+    // Skora göre büyükten küçüğe sırala
+    scoredKeşfet.sort((a, b) => b.finalScore - a.finalScore);
+    
+    // KİŞİSELLEŞTİRME FİLTRESİ: 
+    // Eğer kullanıcı giriş yapmışsa ve favorileri varsa, SADECE alakalı (relevanceScore > 0) olanları göster.
+    const hasAnyFavorites = userFavorites && (
+      (userFavorites.favorites && userFavorites.favorites.length > 0) || 
+      (userFavorites.campaigns && userFavorites.campaigns.length > 0) || 
+      (userFavorites.products && userFavorites.products.length > 0)
+    );
+
+    // KİŞİSELLEŞTİRME FİLTRESİ: KOMPLE KULLANICI ODAKLI
+    if (hasAnyFavorites) {
+      // SADECE relevanceScore > 0 olanları (alakalı olanları) al
+      const strictlyRelevant = scoredKeşfet.filter(item => item.relevanceScore > 0);
+      
+      // Alakalı olanlar varsa skora göre sırala ve max 10 tane dön
+      strictlyRelevant.sort((a, b) => b.finalScore - a.finalScore);
+      
+      if (strictlyRelevant.length > 0) {
+        console.log(`✅ Keşfet: ${strictlyRelevant.length} alakalı hedef seçildi:`, strictlyRelevant.map(t => t.target.name).join(', '));
+      }
+      
+      return strictlyRelevant.slice(0, 10);
+    }
+
+    // Misafir: Sadece çok yakın popülerleri göster
+    return scoredKeşfet.filter(item => item.totalDistance < 100).slice(0, 2);
   }
 
   return [];
@@ -571,7 +956,7 @@ function buildRouteWithTargets(startId, endId, selectedTargets, graph) {
     fullPath = [...fullPath, ...finalPath.slice(1)];
   }
 
-  return fullPath;
+  return { fullPath, optimizedTargets };
 }
 
 /**

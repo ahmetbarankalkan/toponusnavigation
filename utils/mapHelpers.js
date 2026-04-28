@@ -136,7 +136,8 @@ export function applyDualRoomHighlight(
   selectedEndRoom,
   rooms,
   geojsonURLS,
-  qrHighlightedRoom
+  qrHighlightedRoom,
+  discoverRoomId
 ) {
   if (!map || !map.isStyleLoaded()) return;
 
@@ -147,21 +148,42 @@ export function applyDualRoomHighlight(
     ? rooms.find(r => r.id === selectedEndRoom)?.originalId
     : null;
 
+  // Güvenli ID okuma: bazı feature'larda 'id' property'si olmayabilir
+  const safeId = ['coalesce', ['get', 'id'], ''];
+
   Object.keys(geojsonURLS).forEach(floor => {
+    const layerId = `rooms-floor-${floor}`;
     try {
-      const layerId = `rooms-floor-${floor}`;
-      if (map.getLayer(layerId)) {
-        map.setPaintProperty(layerId, 'fill-extrusion-color', [
-          'case',
-          ['==', ['get', 'id'], startRoomId || ''],
-          '#4CAF50',
-          ['==', ['get', 'id'], endRoomId || ''],
-          '#1B3349',
-          '#F5F0FF',
-        ]);
-      }
+      const layer = map.getLayer(layerId);
+      if (!layer) return;
+      
+      const sourceId = layer.source;
+      const source = map.getSource(sourceId);
+      if (!source) return;
+
+      const colorExpr = discoverRoomId
+        ? [
+            'case',
+            ['==', safeId, discoverRoomId],
+            '#FFD700',
+            ['==', safeId, startRoomId || ''],
+            '#4CAF50',
+            ['==', safeId, endRoomId || ''],
+            '#1B3349',
+            '#F5F0FF',
+          ]
+        : [
+            'case',
+            ['==', safeId, startRoomId || ''],
+            '#4CAF50',
+            ['==', safeId, endRoomId || ''],
+            '#1B3349',
+            '#F5F0FF',
+          ];
+
+      map.setPaintProperty(layerId, 'fill-extrusion-color', colorExpr);
     } catch (error) {
-      console.warn(`Could not apply dual highlight to floor ${floor}:`, error);
+      // MapLibre internal error - layer not fully ready yet, silently ignore
     }
   });
 }

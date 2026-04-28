@@ -30,7 +30,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
     }
   }, [isAuthenticated, user]);
 
-  const handleFavoriteToggle = async (e, product, room, discount, discountedPrice) => {
+  const handleFavoriteToggle = async (e, passedProductId, room, discount, discountedPrice, productData) => {
     e.stopPropagation(); // Kartın click eventini durdur
     
     if (!isAuthenticated) {
@@ -38,7 +38,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
       return;
     }
 
-    const productId = product.id || product.room_id || product._id;
+    const productId = String(passedProductId);
     setLoadingFav(prev => ({ ...prev, [productId]: true }));
 
     try {
@@ -61,9 +61,9 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
             rating: room.rating
           },
           productData: {
-            product_name: product.product_name || product.name || product.title,
-            image: product.image,
-            price: product.price,
+            product_name: productData.product_name || productData.name || productData.title,
+            image: productData.image,
+            price: productData.price,
             discounted_price: discountedPrice,
             discount: discount
           }
@@ -86,6 +86,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
   };
 
   const isProductFavorite = (productId) => {
+    if (!productId) return false;
     return favorites.some(f => f.productId === productId || f.storeId === productId);
   };
 
@@ -138,11 +139,22 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
             <div className="flex flex-col gap-4">
               {(room.product_campaign_list || room.product_campaigns || []).slice(0, 3).map((camp, campIdx) => {
                 // Support new populated structure and old embedded structure
-                const product = camp.productId || camp; 
+                // API might not populate productId, so it could be a string/ObjectId
+                const isPopulated = camp.productId && typeof camp.productId === 'object';
+                const product = isPopulated ? camp.productId : camp;
                 const name = product.product_name || product.name || camp.title;
                 const image = product.image || camp.image;
+                
+                // If it's not populated, the actual DB campaign's ID is the best identifier
+                // Or if it has a productId string, use that.
+                let extractedId;
+                if (isPopulated) {
+                   extractedId = product._id || product.id;
+                } else {
+                   extractedId = camp.productId || camp._id || camp.id;
+                }
+                const productId = String(extractedId);
                 const discount = camp.discountPercentage || camp.discount_percentage;
-                const productId = product.id || product.room_id || product._id;
                 
                 // Calculate discounted price if not present (from product price and discount)
                 let discountedPrice = camp.discounted_price;
@@ -183,7 +195,7 @@ export default function ProductCampaigns({ productRooms, onRoomSelect }) {
                       </span>
                       
                       <button
-                        onClick={(e) => handleFavoriteToggle(e, product, room, discount, discountedPrice)}
+                        onClick={(e) => handleFavoriteToggle(e, productId, room, discount, discountedPrice, product)}
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                           isFav ? 'bg-[#1B3349]/10' : 'bg-white/50 hover:bg-white'
                         } ${loadingFav[productId] ? 'animate-pulse' : ''}`}

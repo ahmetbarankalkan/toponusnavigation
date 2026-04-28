@@ -153,3 +153,92 @@ export async function POST(request) {
   }
 }
 
+// PUT - Favoriyi faydalanıldı olarak işaretle
+export async function PUT(request) {
+  try {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: 'Token bulunamadı' },
+        { status: 401 }
+      );
+    }
+
+    const decoded = jwt.verify(token, getJWTSecret());
+    const { id, room_id, storeName, type = 'campaign' } = await request.json();
+
+    if (!id && !room_id && !storeName) {
+      return NextResponse.json(
+        { success: false, error: 'ID eksik' },
+        { status: 400 }
+      );
+    }
+
+    await dbConnect();
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Kullanıcı bulunamadı' },
+        { status: 404 }
+      );
+    }
+
+    // Eşleştirme fonksiyonu: id, room_id veya storeName ile bul
+    const matchFav = (f) => {
+      if (id && (f.campaignId === id || f.storeId === id || f.productId === id)) return true;
+      if (room_id && (f.campaignId === room_id || f.storeId === room_id)) return true;
+      if (storeName && f.storeName && f.storeName.toLowerCase() === storeName.toLowerCase()) return true;
+      return false;
+    };
+
+    let marked = false;
+    if (type === 'campaign' && user.favoriteCampaigns) {
+      const idx = user.favoriteCampaigns.findIndex(matchFav);
+      if (idx > -1) {
+        user.favoriteCampaigns[idx].is_used = true;
+        marked = true;
+      }
+    }
+    if (type === 'product' && user.favoriteProducts) {
+      const idx = user.favoriteProducts.findIndex(matchFav);
+      if (idx > -1) {
+        user.favoriteProducts[idx].is_used = true;
+        marked = true;
+      }
+    }
+    // Kampanya bulunamadıysa ürünlerde de ara (ve tersi)
+    if (!marked && user.favoriteCampaigns) {
+      const idx = user.favoriteCampaigns.findIndex(matchFav);
+      if (idx > -1) {
+        user.favoriteCampaigns[idx].is_used = true;
+        marked = true;
+      }
+    }
+    if (!marked && user.favoriteProducts) {
+      const idx = user.favoriteProducts.findIndex(matchFav);
+      if (idx > -1) {
+        user.favoriteProducts[idx].is_used = true;
+        marked = true;
+      }
+    }
+
+    if (marked) {
+      user.markModified('favoriteCampaigns');
+      user.markModified('favoriteProducts');
+      await user.save();
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Faydalanıldı olarak işaretlendi'
+    });
+  } catch (error) {
+    console.error('Favori güncelleme hatası:', error);
+    return NextResponse.json(
+      { success: false, error: 'Sunucu hatası' },
+      { status: 500 }
+    );
+  }
+}

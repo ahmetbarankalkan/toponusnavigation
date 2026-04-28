@@ -1,5 +1,5 @@
 'use client';
-export const dynamic = 'force-dynamic';
+
 import React, {
   useEffect,
   useRef,
@@ -57,6 +57,7 @@ import MapSidebar from '@/components/Map/MapSidebar';
 import MapHeader from '@/components/Map/MapHeader';
 import QuickAccessButtons from '@/components/QuickAccessButtons';
 import MobileRouteCard from '@/components/Route/MobileRouteCard';
+import CampaignWaypointCard from '@/components/Route/CampaignWaypointCard';
 
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -79,11 +80,11 @@ import {
 } from '../utils/routeHelpers.js';
 
 import {
-  fitMapToPath,
   highlightRoom,
   highlightQrRoom,
   clearHighlightFromAllFloors,
   applyDualRoomHighlight,
+  fitMapToPath,
 } from '../utils/mapHelpers.js';
 import { useChatManagement } from '../hooks/useChatManagement';
 import { useMapNavigation } from '../hooks/useMapNavigation';
@@ -149,8 +150,6 @@ import {
   Menu,
 } from 'lucide-react';
 function MapContent() {
-  // ... rest of the component
-
   // Hydration-safe mounting check - MUST be first
   const [isMounted, setIsMounted] = useState(false);
 
@@ -255,6 +254,9 @@ function MapContent() {
   const [qrHighlightedRoom, setQrHighlightedRoom] = useState(null);
   const [showQrPopup, setShowQrPopup] = useState(false);
   const [showDemoPopup, setShowDemoPopup] = useState(false);
+  const [exploreWaypoints, setExploreWaypoints] = useState([]);
+  const [skippedWaypoints, setSkippedWaypoints] = useState([]);
+  const [userFavorites, setUserFavorites] = useState(null);
   const {
     searchQuery,
     setSearchQuery,
@@ -291,12 +293,33 @@ function MapContent() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
+  // Keşfet modu için favorileri yükle
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (isAuthenticated && routeMode === 'keşfet') {
+        try {
+          const token = localStorage.getItem('user_token');
+          if (!token) return;
+          const res = await fetch('/api/favorites', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setUserFavorites(data);
+          }
+        } catch (err) {
+          console.error('Favorites fetch error:', err);
+        }
+      }
+    };
+    fetchFavorites();
+  }, [isAuthenticated, routeMode]);
+
   // Discover modal kontrolü - URL parametresinden
   useEffect(() => {
     const discoverParam = searchParams.get('discover');
 
     if (discoverParam === 'true') {
-
       setIsDiscoverOpen(true);
       setActiveNavItem(1);
       setDiscoverHeight(50);
@@ -481,7 +504,7 @@ function MapContent() {
         map.getCanvas().style.cursor = '';
       });
     });
-  }, [isSelectingStartRoom]);
+  }, [isSelectingStartRoom, rooms]);
   const handleQuickAccessItemClick = locationKey => {
     const specialLocation = specialLocations[locationKey];
     if (specialLocation) {
@@ -678,8 +701,8 @@ function MapContent() {
         if (center) {
           setMapCenter(center);
         }
-        if (zoom) {
-          setMapZoom(zoom);
+        if (data.zoom) {
+          setMapZoom(data.zoom);
         }
         const currentStoreList = Array.from(storeList).sort();
 
@@ -1093,6 +1116,7 @@ function MapContent() {
     setShowLocationCloseConfirm,
     selectedStartRoom,
     routeSteps,
+    setSkippedWaypoints,
   });
 
   const handleNextFloor = () => {
@@ -1133,6 +1157,101 @@ function MapContent() {
       );
     }
   }, [selectedStartRoom, selectedEndRoom, rooms, qrHighlightedRoom]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (map.isStyleLoaded()) {
+      Object.keys(geojsonURLS).forEach(floor => {
+        const floorNum = parseInt(floor);
+        const visibility = floorNum === currentFloor ? 'visible' : 'none';
+        [
+          `walkable-areas-floor-${floorNum}`,
+          `non-walkable-areas-floor-${floorNum}`,
+          `room-base-floor-${floorNum}`,
+          `rooms-floor-${floorNum}`,
+          `doors-floor-${floorNum}`,
+          `floor-connectors-floor-${floorNum}`,
+          `floor-connectors-elevator-floor-${floorNum}`,
+          `room-labels-floor-${floorNum}`,
+          `room-labels-5m-migros-floor-${floorNum}`,
+          `room-labels-with-logo-floor-${floorNum}`,
+          `room-labels-without-logo-floor-${floorNum}`,
+        ].forEach(layerId => {
+          if (map.getLayer(layerId)) {
+            map.setLayoutProperty(layerId, 'visibility', visibility);
+          }
+        });
+      });
+    }
+  }, [currentFloor]);
+
+  useEffect(() => {
+    console.log("💎 Current User Favorites:", userFavorites);
+  }, [userFavorites]);
+
+  // Kural 1: TEK DOĞRULUK KAYNAĞI (SINGLE SOURCE OF TRUTH)
+  const currentExploreStop = useMemo(() => {
+    return (exploreWaypoints && exploreWaypoints.length > 0) ? exploreWaypoints[0] : null;
+  }, [exploreWaypoints]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timerId = null;
+
+    const applyHighlight = (retryCount = 0) => {
+      if (cancelled) return;
+      const map = mapRef.current;
+      
+      // Harita veya katmanlar hazır değilse bekle
+      if (!map || !map.isStyleLoaded() || !map.getLayer('rooms-floor-0')) {
+        if (retryCount < 5) {
+          timerId = setTimeout(() => applyHighlight(retryCount + 1), 600);
+        }
+        return;
+      }
+
+      // Keşfet modunda aktif mağazanın originalId'sini bul
+      let discoverRoomId = null;
+      if (routeMode === 'keşfet' && currentExploreStop?.target) {
+        const target = currentExploreStop.target;
+        const targetRoomId = target.room_id || target.id || '';
+        const targetName = target.name || '';
+        
+        const matchedRoom = rooms.find(r => {
+          const rId = r.id || '';
+          const rRoomId = r.room_id || '';
+          const rOrigId = r.originalId || '';
+          const rName = r.name || '';
+          return (
+            rId === targetRoomId ||
+            rRoomId === targetRoomId ||
+            rOrigId === targetRoomId ||
+            (targetName && rName.toLowerCase() === targetName.toLowerCase())
+          );
+        });
+
+        discoverRoomId = matchedRoom?.originalId || targetRoomId;
+      }
+
+      applyDualRoomHighlight(
+        map,
+        selectedStartRoom,
+        selectedEndRoom,
+        rooms,
+        geojsonURLS,
+        qrHighlightedRoom,
+        discoverRoomId
+      );
+    };
+
+    applyHighlight();
+
+    return () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [selectedStartRoom, selectedEndRoom, rooms, qrHighlightedRoom, currentExploreStop, routeMode]);
   const handleSpecialLocationButton = specialType => {
 
     if (!currentUserLocation) {
@@ -1773,290 +1892,237 @@ function MapContent() {
               }
             }
           }
-
           await Promise.all(logoPromises);
         };
-        loadRoomLogos();
-        // Harita hazır değilse hiçbir işlem yapma
-        if (!map) return;
+        
+        await loadRoomLogos();
 
-        Object.entries(floorData).forEach(([floor, data]) => {
-          const floorNum = parseInt(floor);
-          if (isNaN(floorNum)) return;
+        const renderFloors = () => {
+          const currentMap = mapRef.current;
+          if (!currentMap) return;
 
-          const isCurrentFloor = floorNum === currentFloor;
-          const sourceId = `indoor-floor-${floorNum}`;
+          if (!currentMap.isStyleLoaded()) {
+            currentMap.once('styledata', renderFloors);
+            return;
+          }
 
-          // Harita veya stil hazır değilse atla
-          if (!map || !map.getSource) return;
+          Object.entries(floorData).forEach(([floor, data]) => {
+            const floorNum = parseInt(floor);
+            const isCurrentFloor = floorNum === currentFloor;
+            const sourceId = `indoor-floor-${floorNum}`;
 
-          // Kaynak zaten varsa ekleme
-          if (map.getSource(sourceId)) return;
+            if (!currentMap.getSource(sourceId)) {
+              currentMap.addSource(sourceId, { type: 'geojson', data });
+            }
 
-          map.addSource(sourceId, { type: 'geojson', data });
-          map.addLayer({
-            id: `walkable-areas-floor-${floorNum}`,
-            type: 'fill',
-            source: sourceId,
-            filter: [
-              'all',
-              ['==', ['get', 'type'], 'area'],
-              ['==', ['get', 'subtype'], 'walkable'],
-            ],
-            paint: {
-              'fill-color': '#FFFFFF',
-              'fill-opacity': 1,
-            },
-            layout: {
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-          });
-          map.addLayer({
-            id: `non-walkable-areas-floor-${floorNum}`,
-            type: 'fill-extrusion',
-            source: sourceId,
-            filter: [
-              'all',
-              ['==', ['get', 'type'], 'area'],
-              ['==', ['get', 'subtype'], 'non-walkable'],
-            ],
-            paint: {
-              'fill-extrusion-color': '#8E9AAF',
-              'fill-extrusion-height': 1.2,
-              'fill-extrusion-base': 0,
-              'fill-extrusion-opacity': 1,
-            },
-            layout: {
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-          });
-          // Zemin katmanı (mağazaların altı)
-          map.addLayer({
-            id: `room-base-floor-${floorNum}`,
-            type: 'fill',
-            source: sourceId,
-            filter: ['==', ['get', 'type'], 'room'],
-            paint: {
-              'fill-color': '#DCDCDC',
-              'fill-opacity': 1,
-            },
-            layout: {
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-          });
-          // Mağaza katmanı (3D)
-          map.addLayer({
-            id: `rooms-floor-${floorNum}`,
-            type: 'fill-extrusion',
-            source: sourceId,
-            filter: ['==', ['get', 'type'], 'room'],
-            paint: {
-              'fill-extrusion-color': [
-                'case',
-                ['==', ['get', 'id'], 'room-101'], // 5M Migros için özel renk
-                '#E8E8E8', // Açık gri
-                '#eae6d9', // Diğer mağazalar için normal renk
+            if (currentMap.getLayer(`rooms-floor-${floorNum}`)) return;
+
+            currentMap.addLayer({
+              id: `walkable-areas-floor-${floorNum}`,
+              type: 'fill',
+              source: sourceId,
+              filter: [
+                'all',
+                ['==', ['get', 'type'], 'area'],
+                ['==', ['get', 'subtype'], 'walkable'],
               ],
-              'fill-extrusion-height': 1.5,
-              'fill-extrusion-base': 0,
-              'fill-extrusion-opacity': 1,
-            },
-            layout: {
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-          });
-          map.addLayer({
-            id: `floor-connectors-floor-${floorNum}`,
-            type: 'symbol',
-            source: sourceId,
-            filter: ['==', ['get', 'type'], 'floor-connector-node'],
-            layout: {
-              'icon-image': 'escalator-icon',
-              'icon-size': 0.8,
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': true,
-              'icon-offset': [-18, 0],
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-            minzoom: 19,
-          });
-          map.addLayer({
-            id: `floor-connectors-elevator-floor-${floorNum}`,
-            type: 'symbol',
-            source: sourceId,
-            filter: ['==', ['get', 'type'], 'floor-connector-node'],
-            layout: {
-              'icon-image': 'elevator-icon',
-              'icon-size': 0.8,
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': true,
-              'icon-offset': [18, 0],
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-            minzoom: 19,
-          });
-          // 5M Migros için özel gri label layer - Çatıda düz yazı
-          map.addLayer({
-            id: `room-labels-5m-migros-floor-${floorNum}`,
-            type: 'symbol',
-            source: sourceId,
-            filter: [
-              'all',
-              ['==', ['get', 'type'], 'room'],
-              ['==', ['get', 'id'], 'room-101'], // Sadece 5M Migros
-            ],
-            layout: {
-              'text-field': ['get', 'name'],
-              'text-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                16,
-                8, // zoom 16'da 8px
-                18,
-                20, // zoom 18'de 20px
-                20,
-                32, // zoom 20'de 32px
-                22,
-                40, // zoom 22'de 40px
+              paint: {
+                'fill-color': '#FFFFFF',
+                'fill-opacity': 1,
+              },
+              layout: {
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+            });
+
+            currentMap.addLayer({
+              id: `non-walkable-areas-floor-${floorNum}`,
+              type: 'fill-extrusion',
+              source: sourceId,
+              filter: [
+                'all',
+                ['==', ['get', 'type'], 'area'],
+                ['==', ['get', 'subtype'], 'non-walkable'],
               ],
-              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-              'symbol-placement': 'point',
-              'text-allow-overlap': true,
-              'text-ignore-placement': true,
-              'text-anchor': 'center',
-              'text-offset': [0, -0.8],
-              'text-padding': 0,
-              'text-rotation-alignment': 'map',
-              'text-pitch-alignment': 'map',
-              'text-radial-offset': 0,
-              'text-variable-anchor': ['center'],
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-            paint: {
-              'text-color': '#888888',
-              'text-halo-color': '#f0f0f0',
-              'text-halo-width': 4,
-              'text-halo-blur': 1,
-              'text-opacity': 1,
-            },
+              paint: {
+                'fill-extrusion-color': '#8E9AAF',
+                'fill-extrusion-height': 1.2,
+                'fill-extrusion-base': 0,
+                'fill-extrusion-opacity': 1,
+              },
+              layout: {
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+            });
+
+            currentMap.addLayer({
+              id: `room-base-floor-${floorNum}`,
+              type: 'fill',
+              source: sourceId,
+              filter: ['==', ['get', 'type'], 'room'],
+              paint: {
+                'fill-color': '#DCDCDC',
+                'fill-opacity': 1,
+              },
+              layout: {
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+            });
+
+            currentMap.addLayer({
+              id: `rooms-floor-${floorNum}`,
+              type: 'fill-extrusion',
+              source: sourceId,
+              filter: ['==', ['get', 'type'], 'room'],
+              paint: {
+                'fill-extrusion-color': [
+                  'case',
+                  ['==', ['get', 'id'], 'room-101'],
+                  '#E8E8E8',
+                  '#eae6d9',
+                ],
+                'fill-extrusion-height': 1.5,
+                'fill-extrusion-base': 0,
+                'fill-extrusion-opacity': 1,
+              },
+              layout: {
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+            });
+
+            currentMap.addLayer({
+              id: `room-labels-with-logo-floor-${floorNum}`,
+              type: 'symbol',
+              source: sourceId,
+              filter: [
+                'all',
+                ['==', ['get', 'type'], 'room'],
+                ['has', 'logo'],
+                ['!=', ['get', 'logo'], ''],
+                ['!=', ['get', 'id'], 'room-101'],
+              ],
+              layout: {
+                'text-field': ['get', 'name'],
+                'text-size': 12,
+                'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                'icon-image': ['concat', 'logo-', ['get', 'id']],
+                'icon-size': 0.4,
+                'icon-allow-overlap': true,
+                'text-anchor': 'top',
+                'text-offset': [0, 0.2],
+                'icon-anchor': 'bottom',
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+              paint: {
+                'text-color': '#333',
+                'text-halo-color': 'white',
+                'text-halo-width': 2,
+              },
+            });
+
+            currentMap.addLayer({
+              id: `room-labels-without-logo-floor-${floorNum}`,
+              type: 'symbol',
+              source: sourceId,
+              filter: [
+                'all',
+                ['==', ['get', 'type'], 'room'],
+                ['any', ['!', ['has', 'logo']], ['==', ['get', 'logo'], '']],
+                ['!=', ['get', 'id'], 'room-101'],
+              ],
+              layout: {
+                'text-field': ['get', 'name'],
+                'text-size': 12,
+                'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                'text-anchor': 'center',
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+              paint: {
+                'text-color': '#333',
+                'text-halo-color': 'white',
+                'text-halo-width': 2,
+              },
+            });
+
+            currentMap.addLayer({
+              id: `floor-connectors-floor-${floorNum}`,
+              type: 'symbol',
+              source: sourceId,
+              filter: ['==', ['get', 'type'], 'floor-connector-node'],
+              layout: {
+                'icon-image': 'escalator-icon',
+                'icon-size': 0.8,
+                'icon-allow-overlap': true,
+                'icon-ignore-placement': true,
+                'icon-offset': [-18, 0],
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+              minzoom: 19,
+            });
+
+            currentMap.addLayer({
+              id: `floor-connectors-elevator-floor-${floorNum}`,
+              type: 'symbol',
+              source: sourceId,
+              filter: ['==', ['get', 'type'], 'floor-connector-node'],
+              layout: {
+                'icon-image': 'elevator-icon',
+                'icon-size': 0.8,
+                'icon-allow-overlap': true,
+                'icon-ignore-placement': true,
+                'icon-offset': [18, 0],
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+              minzoom: 19,
+            });
+
+            currentMap.addLayer({
+              id: `room-labels-5m-migros-floor-${floorNum}`,
+              type: 'symbol',
+              source: sourceId,
+              filter: [
+                'all',
+                ['==', ['get', 'type'], 'room'],
+                ['==', ['get', 'id'], 'room-101'],
+              ],
+              layout: {
+                'text-field': ['get', 'name'],
+                'text-size': 14,
+                'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                'symbol-placement': 'point',
+                'text-allow-overlap': true,
+                'text-anchor': 'center',
+                'text-offset': [0, -0.8],
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+              paint: {
+                'text-color': '#888888',
+                'text-halo-color': '#f0f0f0',
+                'text-halo-width': 4,
+              },
+            });
+
+            currentMap.addLayer({
+              id: `doors-floor-${floorNum}`,
+              type: 'circle',
+              source: sourceId,
+              filter: ['==', ['get', 'type'], 'door-node'],
+              paint: {
+                'circle-radius': 1.5,
+                'circle-color': '#FFFFFF',
+                'circle-stroke-color': '#1B3349',
+                'circle-stroke-width': 0.5,
+                'circle-opacity': 0.6,
+              },
+              layout: {
+                visibility: isCurrentFloor ? 'visible' : 'none',
+              },
+              minzoom: 19,
+            });
           });
 
-          // Diğer mağazalar için normal label layer (5M Migros hariç)
-          map.addLayer({
-            id: `room-labels-with-logo-floor-${floorNum}`,
-            type: 'symbol',
-            source: sourceId,
-            filter: [
-              'all',
-              ['==', ['get', 'type'], 'room'],
-              ['has', 'logo'],
-              ['!=', ['get', 'logo'], null],
-              ['!=', ['get', 'logo'], ''],
-              ['!=', ['get', 'id'], 'room-101'], // 5M Migros hariç
-            ],
-            layout: {
-              'text-field': ['get', 'name'],
-              'text-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                16,
-                6, // zoom 16'da 6px
-                18,
-                10, // zoom 18'de 10px
-                20,
-                14, // zoom 20'de 14px
-                22,
-                18, // zoom 22'de 18px
-              ],
-              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-              'symbol-placement': 'point',
-              'icon-image': ['concat', 'logo-', ['get', 'id']],
-              'icon-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                16,
-                0.15, // zoom 16'da 0.15
-                18,
-                0.35, // zoom 18'de 0.35
-                20,
-                0.5, // zoom 20'de 0.50
-                22,
-                0.65, // zoom 22'de 0.65
-              ],
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': false,
-              'text-allow-overlap': false,
-              'text-ignore-placement': false,
-              'text-anchor': 'top',
-              'text-offset': [0, 0.2],
-              'icon-anchor': 'bottom',
-              'icon-text-fit': 'none',
-              'text-padding': 2,
-              'icon-padding': 2,
-              'icon-pitch-alignment': 'viewport',
-              'text-pitch-alignment': 'viewport',
-              'icon-rotation-alignment': 'viewport',
-              'text-rotation-alignment': 'viewport',
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-            paint: {
-              'text-color': '#333',
-              'text-halo-color': 'white',
-              'text-halo-width': 2,
-              'text-halo-blur': 1,
-            },
-          });
-          map.addLayer({
-            id: `room-labels-without-logo-floor-${floorNum}`,
-            type: 'symbol',
-            source: sourceId,
-            filter: [
-              'all',
-              ['==', ['get', 'type'], 'room'],
-              [
-                'any',
-                ['!', ['has', 'logo']],
-                ['==', ['get', 'logo'], null],
-                ['==', ['get', 'logo'], ''],
-              ],
-            ],
-            layout: {
-              'text-field': ['get', 'name'],
-              'text-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                16,
-                6, // zoom 16'da 6px
-                18,
-                10, // zoom 18'de 10px
-                20,
-                14, // zoom 20'de 14px
-                22,
-                18, // zoom 22'de 18px
-              ],
-              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-              'text-anchor': 'center',
-              'text-allow-overlap': false,
-              'text-ignore-placement': false,
-              'symbol-placement': 'point',
-              'text-padding': 2,
-              'text-pitch-alignment': 'viewport',
-              'text-rotation-alignment': 'viewport',
-              visibility: isCurrentFloor ? 'visible' : 'none',
-            },
-            paint: {
-              'text-color': '#333',
-              'text-halo-color': 'white',
-              'text-halo-width': 2,
-              'text-halo-blur': 1,
-            },
-          });
-          if (!map.getSource('room-highlight')) {
-            map.addSource('room-highlight', {
+          if (!currentMap.getSource('room-highlight')) {
+            currentMap.addSource('room-highlight', {
               type: 'geojson',
               data: {
                 type: 'FeatureCollection',
@@ -2064,8 +2130,8 @@ function MapContent() {
               },
             });
           }
-          if (!map.getLayer('room-highlight-layer')) {
-            map.addLayer({
+          if (!currentMap.getLayer('room-highlight-layer')) {
+            currentMap.addLayer({
               id: 'room-highlight-layer',
               type: 'fill',
               source: 'room-highlight',
@@ -2075,7 +2141,9 @@ function MapContent() {
               },
             });
           }
-        });
+        };
+        
+        renderFloors();
         map.once('idle', () => {
           updateRoomClickHandlers();
         });
@@ -2084,13 +2152,12 @@ function MapContent() {
     setTimeout(updateRoomClickHandlers, 1000);
     return () => {
       if (mapRef.current) {
-
         mapRef.current.remove();
         mapRef.current = null;
       }
       if (qrHighlightedRoom) {
         const intervalId = setInterval(() => {
-          if (map.isStyleLoaded()) {
+          if (mapRef.current?.isStyleLoaded()) {
             highlightQrRoom(qrHighlightedRoom.id, qrHighlightedRoom.floor);
             clearInterval(intervalId);
           }
@@ -2138,32 +2205,11 @@ function MapContent() {
     }
   }, [handleFunctionCall, setOnFunctionCall]);
 
+
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (map.isStyleLoaded()) {
-      Object.keys(geojsonURLS).forEach(floor => {
-        const floorNum = parseInt(floor);
-        const visibility = floorNum === currentFloor ? 'visible' : 'none';
-        [
-          `walkable-areas-floor-${floorNum}`,
-          `non-walkable-areas-floor-${floorNum}`,
-          `room-base-floor-${floorNum}`,
-          `rooms-floor-${floorNum}`,
-          `doors-floor-${floorNum}`,
-          `floor-connectors-floor-${floorNum}`,
-          `floor-connectors-elevator-floor-${floorNum}`,
-          `room-labels-floor-${floorNum}`,
-          `room-labels-5m-migros-floor-${floorNum}`,
-          `room-labels-with-logo-floor-${floorNum}`,
-          `room-labels-without-logo-floor-${floorNum}`,
-        ].forEach(layerId => {
-          if (map.getLayer(layerId)) {
-            map.setLayoutProperty(layerId, 'visibility', visibility);
-          }
-        });
-      });
-    }
 
     const coords = routeByFloor[currentFloor];
     if (!coords || coords.length === 0) {
@@ -2201,30 +2247,76 @@ function MapContent() {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    Object.keys(geojsonURLS).forEach(floor => {
-      const floorNum = parseInt(floor);
-      
-      // Odalar için yükseklik ayarı
-      const roomLayerId = `rooms-floor-${floorNum}`;
-      if (map.getLayer(roomLayerId)) {
-        map.setPaintProperty(
-          roomLayerId,
-          'fill-extrusion-height',
-          mapView === '2D' ? 0 : 1.5
-        );
-      }
+    // Mağazalar için yükseklik ayarı
+    if (map.getLayer('nav-fill')) {
+      map.setPaintProperty('nav-fill', 'fill-extrusion-height', mapView === '2D' ? 0 : 1.5);
+    }
 
-      // Yürünemez alanlar (duvarlar vb.) için yükseklik ayarı
-      const nonWalkableLayerId = `non-walkable-areas-floor-${floorNum}`;
-      if (map.getLayer(nonWalkableLayerId)) {
-        map.setPaintProperty(
-          nonWalkableLayerId,
-          'fill-extrusion-height',
-          mapView === '2D' ? 0 : 1.2
-        );
-      }
-    });
+    // Yapılar için yükseklik ayarı
+    if (map.getLayer('nav-non-walkable-areas')) {
+      map.setPaintProperty('nav-non-walkable-areas', 'fill-extrusion-height', mapView === '2D' ? 0 : 1.2);
+    }
+
+    // Vurgu için yükseklik ayarı
+    if (map.getLayer('nav-highlight')) {
+      map.setPaintProperty('nav-highlight', 'fill-extrusion-height', mapView === '2D' ? 0 : 1.51);
+    }
   }, [mapView]);
+  const handleSkipWaypoint = async (waypoint) => {
+    if (!waypoint || !waypoint.target) return;
+    const newSkipped = [...skippedWaypoints, waypoint.target.id, waypoint.target.room_id];
+    setSkippedWaypoints(newSkipped);
+  };
+
+  const handleVisitWaypoint = async (waypoint) => {
+    if (!waypoint || !waypoint.target) return;
+    
+    try {
+      const token = localStorage.getItem('user_token');
+      if (token) {
+        // Rotayı kaydet
+        await fetch('/api/user/routes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            startPoint: selectedStartRoom,
+            endPoint: waypoint.target.id,
+            duration: Math.ceil(totalDistance / 80),
+            distance: Math.round(totalDistance),
+            date: new Date().toISOString()
+          })
+        });
+
+        // Favoriyi faydalanıldı olarak işaretle - birden fazla ID ile dene
+        const targetId = waypoint.target.id || waypoint.target.room_id || '';
+        const targetRoomId = waypoint.target.room_id || waypoint.target.id || '';
+        
+        // Kampanya olarak işaretle
+        await fetch('/api/favorites', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            id: targetId,
+            room_id: targetRoomId,
+            storeName: waypoint.target.name,
+            type: 'campaign'
+          })
+        });
+      }
+    } catch (e) {
+      console.error('Failed to mark visited', e);
+    }
+    
+    // Ziyaret ettikten sonra rotadan çıkar
+    const newSkipped = [...skippedWaypoints, waypoint.target.id, waypoint.target.room_id];
+    setSkippedWaypoints(newSkipped);
+  };
 
   useRouteCalculation({
     mapRef,
@@ -2245,6 +2337,10 @@ function MapContent() {
     isAnimationActiveRef,
     animationFrameIdRef,
     animateIconAlongRoute,
+    setExploreWaypoints,
+    skippedWaypoints,
+    userFavorites,
+    allCampaigns: campaignRooms
   });
 
   useEffect(() => {
@@ -2308,6 +2404,12 @@ function MapContent() {
           {/* Kart - Always show when card is not minimized - Kiosk modda gizle */}
           {/* Oda kartı - sadece içerik varsa göster */}
           <Suspense fallback={null}>
+            <CampaignWaypointCard
+              waypoint={currentExploreStop}
+              onSkip={handleSkipWaypoint}
+              onVisit={handleVisitWaypoint}
+              isHidden={isKioskMode || isCardMinimized || activeNavItem !== 0 || routeMode !== 'keşfet' || !currentExploreStop}
+            />
             <MobileRouteCard
               isKioskMode={isKioskMode}
               isCardMinimized={isCardMinimized}

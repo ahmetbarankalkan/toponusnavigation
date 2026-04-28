@@ -16,6 +16,7 @@ export async function GET(request) {
     const Place = require("../../../models/Place");
     const Room = require("../../../models/Room");
     const Campaign = require("../../../models/Campaign");
+    const Product = require("../../../models/Product");
 
     if (slug) {
       console.log(`🔍 Fetching data for slug: ${slug}`);
@@ -35,7 +36,7 @@ export async function GET(request) {
       // Bu mekana ait tüm odaları ve kampanyaları getir
       const [rooms, campaigns] = await Promise.all([
         Room.find({ place_id: place._id }),
-        Campaign.find({ placeId: place._id.toString(), isActive: true })
+        Campaign.find({ placeId: place._id.toString(), isActive: true }).populate('productId')
       ]);
 
       console.log(`🏢 Rooms found: ${rooms.length}`);
@@ -61,6 +62,7 @@ export async function GET(request) {
 
         return {
           id: room.room_id,
+          originalId: room.originalId,
           name: room.name,
           floor: room.floor,
           logo: room.content?.logo,

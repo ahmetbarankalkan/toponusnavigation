@@ -32,6 +32,7 @@ export const useRouteActions = ({
   setShowLocationCloseConfirm,
   selectedStartRoom,
   routeSteps,
+  setSkippedWaypoints,
 }) => {
   const handleFinish = useCallback(() => {
     const currentDistance = totalDistance;
@@ -46,6 +47,7 @@ export const useRouteActions = ({
     setIsCardMinimized(true);
     setStartQuery('');
     setEndQuery('');
+    if (setSkippedWaypoints) setSkippedWaypoints([]);
     setSearchQuery('');
     setSearchResults([]);
     setShowSearchDropdown(false);
@@ -212,6 +214,7 @@ Başka bir yere gitmek ister misiniz?`,
     setIsSelectingStartRoom(false);
     setStartQuery('');
     setEndQuery('');
+    if (setSkippedWaypoints) setSkippedWaypoints([]);
     setSearchQuery('');
     setSearchResults([]);
     setShowSearchDropdown(false);
@@ -295,7 +298,8 @@ Başka bir yere gitmek ister misiniz?`,
     setLocationMarkerFloor,
     isAnimationActiveRef,
     animationFrameIdRef,
-    mapRef
+    mapRef,
+    setSkippedWaypoints,
   ]);
 
   const handleCompleteRoute = useCallback(async () => {

@@ -21,6 +21,10 @@ export const useRouteCalculation = ({
   isAnimationActiveRef,
   animationFrameIdRef,
   animateIconAlongRoute,
+  setExploreWaypoints,
+  skippedWaypoints = [],
+  userFavorites = null,
+  allCampaigns = []
 }) => {
   useEffect(() => {
     // Async wrapper function
@@ -71,6 +75,7 @@ export const useRouteCalculation = ({
       }
       console.log(`🔄 Route calculation starting... Mode: ${routeMode}`);
       console.log(`📍 PlaceId: ${placeId}`);
+      console.log(`👤 User Favorites Status: ${userFavorites ? 'Loaded' : 'None'}`);
       console.log(
         `🏠 Start: ${startRoom.name} (${
           startRoom.floor
@@ -153,15 +158,24 @@ export const useRouteCalculation = ({
       endDoorId = `f${endRoom.floor}-${endRoom.doorId}`;
 
       // Gelişmiş rotalama algoritmasını kullan
-      const path = await calculateAdvancedRoute(
+      const { path, targets } = await calculateAdvancedRoute(
         startDoorId,
         endDoorId,
         graph,
         routeMode,
         preferredTransport,
         allGeoData,
-        placeId // Yer ID'si gerekli
+        placeId, // Yer ID'si gerekli
+        skippedWaypoints,
+        userFavorites,
+        rooms,
+        allCampaigns
       );
+      
+      if (setExploreWaypoints) {
+        setExploreWaypoints(targets || []);
+      }
+
       if (path.length === 0) {
         setTotalDistance(0);
         setRouteByFloor({});
@@ -297,5 +311,8 @@ export const useRouteCalculation = ({
     isAnimationActiveRef,
     animationFrameIdRef,
     animateIconAlongRoute,
+    setExploreWaypoints,
+    skippedWaypoints,
+    userFavorites,
   ]);
 };
