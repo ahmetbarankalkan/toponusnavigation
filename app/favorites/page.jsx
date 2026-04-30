@@ -243,8 +243,11 @@ function FavoritesContent() {
       </div>
 
       {/* Info Pill */}
-      <div className="absolute left-[13px] bottom-[11px] h-[30px] bg-white rounded-[20px] px-[15px] flex items-center justify-center">
+      <div className="absolute left-[13px] bottom-[11px] h-[30px] bg-white rounded-[20px] px-[12px] flex items-center justify-center gap-2">
         <span className="text-[9px] font-semibold text-black font-poppins">{campaign.campaignData?.title || campaign.campaignTitle}</span>
+        {campaign.is_used && (
+          <span className="w-[14px] h-[14px] rounded-full bg-green-500 text-white text-[10px] leading-[14px] text-center font-bold">&#10003;</span>
+        )}
       </div>
 
       {/* Rating Pill */}
@@ -268,12 +271,6 @@ function FavoritesContent() {
         <span className="text-[8px] font-semibold text-white font-poppins">Detaylara göz at</span>
       </button>
 
-      {/* Faydalanıldı Badge */}
-      {campaign.is_used && (
-        <div className="absolute left-[13px] bottom-[45px] bg-green-500/90 text-white rounded-[20px] px-2 py-0.5 shadow-sm border border-green-400 backdrop-blur-md">
-          <span className="text-[8px] font-bold uppercase tracking-wider">Faydalanıldı</span>
-        </div>
-      )}
     </div>
   );
 

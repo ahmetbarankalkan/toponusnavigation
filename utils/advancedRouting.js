@@ -157,6 +157,39 @@ async function calculateSpecialRoute(
       );
     };
 
+    const usedFavorites = [
+      ...(userFavorites.campaigns || []),
+      ...(userFavorites.products || [])
+    ].filter(item => item?.is_used);
+
+    const matchesUsedFavorite = (store) => {
+      const storeIds = [
+        store.id,
+        store.room_id,
+        store.originalId
+      ].map(normalizeStr).filter(Boolean);
+      const storeName = normalizeStr(store.name);
+
+      return usedFavorites.some(item => {
+        const usedIds = [
+          item.id,
+          item.campaignId,
+          item.productId,
+          item.storeId,
+          item.roomData?.id,
+          item.roomData?.room_id,
+          item.campaignData?.id,
+          item.campaignData?.campaignId,
+          item.productData?.id,
+          item.productData?.productId,
+          item.productData?.storeId
+        ].map(normalizeStr).filter(Boolean);
+        const usedName = normalizeStr(item.storeName || item.roomData?.name);
+
+        return usedIds.some(usedId => storeIds.includes(usedId)) || (usedName && storeName === usedName);
+      });
+    };
+
     // 1. Favori Mağazalar
     if (userFavorites.favorites && userFavorites.favorites.length > 0) {
       userFavorites.favorites.forEach(fav => {
@@ -197,6 +230,7 @@ async function calculateSpecialRoute(
     // 2. Favori Kampanyalar
     if (userFavorites.campaigns && userFavorites.campaigns.length > 0) {
       userFavorites.campaigns.forEach(camp => {
+        if (camp.is_used) return;
         const campStoreId = normalizeStr(camp.storeId || camp.roomData?.room_id || camp.roomData?.id);
         const campId = normalizeStr(camp.id || camp.campaignId);
         const campName = normalizeStr(camp.storeName);
@@ -242,6 +276,7 @@ async function calculateSpecialRoute(
     // 3. Favori Ürünler
     if (userFavorites.products && userFavorites.products.length > 0) {
       userFavorites.products.forEach(prod => {
+        if (prod.is_used) return;
         const prodStoreId = normalizeStr(prod.storeId || prod.productData?.storeId);
         const prodName = normalizeStr(prod.storeName);
         
@@ -280,6 +315,10 @@ async function calculateSpecialRoute(
           }
         }
       });
+    }
+
+    if (usedFavorites.length > 0) {
+      targetStores = targetStores.filter(store => !matchesUsedFavorite(store));
     }
   }
 
@@ -791,9 +830,25 @@ function selectOptimalTargets(startId, endId, targets, graph, mode, userFavorite
         }
 
         // 0. Kullanılmışlık Kontrolü
-        const isUsed = campaigns.some(c => 
-          (String(c.id).toLowerCase() === targetId || String(c.campaignId).toLowerCase() === targetId || String(c.storeId).toLowerCase() === targetRoomId) && c.is_used
-        );
+        const isUsedCampaign = campaigns.some(c => {
+          const storeName = normalizeStr(c.storeName || c.roomData?.name);
+          return (
+            normalizeStr(c.id) === targetId ||
+            normalizeStr(c.campaignId) === targetId ||
+            normalizeStr(c.storeId) === targetRoomId ||
+            storeName === targetName
+          ) && c.is_used;
+        });
+        const isUsedProduct = products.some(p => {
+          const storeName = normalizeStr(p.storeName || p.roomData?.name);
+          return (
+            normalizeStr(p.id) === targetId ||
+            normalizeStr(p.productId) === targetId ||
+            normalizeStr(p.storeId || p.productData?.storeId) === targetRoomId ||
+            storeName === targetName
+          ) && p.is_used;
+        });
+        const isUsed = isUsedCampaign || isUsedProduct;
         
         if (isUsed) return { ...item, relevanceScore: -1, finalScore: -1000 };
 

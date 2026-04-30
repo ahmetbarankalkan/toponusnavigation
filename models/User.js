@@ -57,6 +57,8 @@ const UserSchema = new mongoose.Schema(
       campaignTitle: String,
       roomData: { type: Object },
       campaignData: { type: Object },
+      is_used: { type: Boolean, default: false },
+      usedDate: Date,
       addedDate: { type: Date, default: Date.now }
     }],
     favoriteProducts: [{
@@ -65,6 +67,8 @@ const UserSchema = new mongoose.Schema(
       storeName: String,
       roomData: { type: Object },
       productData: { type: Object },
+      is_used: { type: Boolean, default: false },
+      usedDate: Date,
       addedDate: { type: Date, default: Date.now }
     }],
     routeHistory: [{

@@ -293,10 +293,10 @@ function MapContent() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  // Keşfet modu için favorileri yükle
+  // Favorileri erken yükle: Keşfet moduna geçince rota daha hızlı oluşsun
   useEffect(() => {
     const fetchFavorites = async () => {
-      if (isAuthenticated && routeMode === 'keşfet') {
+      if (isAuthenticated) {
         try {
           const token = localStorage.getItem('user_token');
           if (!token) return;
@@ -313,7 +313,7 @@ function MapContent() {
       }
     };
     fetchFavorites();
-  }, [isAuthenticated, routeMode]);
+  }, [isAuthenticated]);
 
   // Discover modal kontrolü - URL parametresinden
   useEffect(() => {
@@ -2150,21 +2150,16 @@ function MapContent() {
       }
     });
     setTimeout(updateRoomClickHandlers, 1000);
+  }, [mapCenter, mapZoom]);
+
+  useEffect(() => {
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
-      if (qrHighlightedRoom) {
-        const intervalId = setInterval(() => {
-          if (mapRef.current?.isStyleLoaded()) {
-            highlightQrRoom(qrHighlightedRoom.id, qrHighlightedRoom.floor);
-            clearInterval(intervalId);
-          }
-        }, 100);
-      }
     };
-  }, [mapCenter, mapZoom, qrHighlightedRoom, highlightQrRoom]);
+  }, []);
 
   const chatHandlers = createChatHandlers({
     rooms,
@@ -2269,7 +2264,7 @@ function MapContent() {
   };
 
   const handleVisitWaypoint = async (waypoint) => {
-    if (!waypoint || !waypoint.target) return;
+    if (!waypoint || !waypoint.target) return false;
     
     try {
       const token = localStorage.getItem('user_token');
@@ -2295,7 +2290,7 @@ function MapContent() {
         const targetRoomId = waypoint.target.room_id || waypoint.target.id || '';
         
         // Kampanya olarak işaretle
-        await fetch('/api/favorites', {
+        const favoriteResponse = await fetch('/api/favorites', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -2308,14 +2303,25 @@ function MapContent() {
             type: 'campaign'
           })
         });
+        const favoriteData = await favoriteResponse.json();
+        if (favoriteData.success) {
+          setUserFavorites(prev => ({
+            ...(prev || {}),
+            favorites: favoriteData.favorites || prev?.favorites || [],
+            campaigns: favoriteData.campaigns || prev?.campaigns || [],
+            products: favoriteData.products || prev?.products || []
+          }));
+        }
       }
     } catch (e) {
       console.error('Failed to mark visited', e);
+      return false;
     }
     
     // Ziyaret ettikten sonra rotadan çıkar
     const newSkipped = [...skippedWaypoints, waypoint.target.id, waypoint.target.room_id];
     setSkippedWaypoints(newSkipped);
+    return true;
   };
 
   useRouteCalculation({

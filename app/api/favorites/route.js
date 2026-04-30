@@ -186,41 +186,60 @@ export async function PUT(request) {
     }
 
     // Eşleştirme fonksiyonu: id, room_id veya storeName ile bul
+    const normalize = value => String(value || '').trim().toLowerCase();
     const matchFav = (f) => {
-      if (id && (f.campaignId === id || f.storeId === id || f.productId === id)) return true;
-      if (room_id && (f.campaignId === room_id || f.storeId === room_id)) return true;
-      if (storeName && f.storeName && f.storeName.toLowerCase() === storeName.toLowerCase()) return true;
+      const normalizedId = normalize(id);
+      const normalizedRoomId = normalize(room_id);
+      const normalizedStoreName = normalize(storeName);
+      const ids = [
+        f.id,
+        f.campaignId,
+        f.productId,
+        f.storeId,
+        f.roomData?.id,
+        f.roomData?.room_id,
+        f.campaignData?.id,
+        f.campaignData?.campaignId,
+        f.productData?.id,
+        f.productData?.productId,
+        f.productData?.storeId,
+      ].map(normalize).filter(Boolean);
+
+      if (normalizedId && ids.includes(normalizedId)) return true;
+      if (normalizedRoomId && ids.includes(normalizedRoomId)) return true;
+      if (normalizedStoreName && normalize(f.storeName) === normalizedStoreName) return true;
       return false;
     };
 
     let marked = false;
+    const markUsed = (item) => {
+      item.is_used = true;
+      item.usedDate = new Date();
+      marked = true;
+    };
     if (type === 'campaign' && user.favoriteCampaigns) {
       const idx = user.favoriteCampaigns.findIndex(matchFav);
       if (idx > -1) {
-        user.favoriteCampaigns[idx].is_used = true;
-        marked = true;
+        markUsed(user.favoriteCampaigns[idx]);
       }
     }
     if (type === 'product' && user.favoriteProducts) {
       const idx = user.favoriteProducts.findIndex(matchFav);
       if (idx > -1) {
-        user.favoriteProducts[idx].is_used = true;
-        marked = true;
+        markUsed(user.favoriteProducts[idx]);
       }
     }
     // Kampanya bulunamadıysa ürünlerde de ara (ve tersi)
     if (!marked && user.favoriteCampaigns) {
       const idx = user.favoriteCampaigns.findIndex(matchFav);
       if (idx > -1) {
-        user.favoriteCampaigns[idx].is_used = true;
-        marked = true;
+        markUsed(user.favoriteCampaigns[idx]);
       }
     }
     if (!marked && user.favoriteProducts) {
       const idx = user.favoriteProducts.findIndex(matchFav);
       if (idx > -1) {
-        user.favoriteProducts[idx].is_used = true;
-        marked = true;
+        markUsed(user.favoriteProducts[idx]);
       }
     }
 
@@ -232,7 +251,11 @@ export async function PUT(request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Faydalanıldı olarak işaretlendi'
+      marked,
+      favorites: user.favoriteStores || [],
+      campaigns: user.favoriteCampaigns || [],
+      products: user.favoriteProducts || [],
+      message: marked ? 'Faydalanıldı olarak işaretlendi' : 'Eşleşen favori bulunamadı'
     });
   } catch (error) {
     console.error('Favori güncelleme hatası:', error);
