@@ -1,8 +1,5 @@
 import { useCallback, useRef } from 'react';
 
-/**
- * Rota animasyonu için custom hook
- */
 export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
   const animationFrameIdRef = useRef(null);
   const isAnimationActiveRef = useRef(false);
@@ -14,15 +11,14 @@ export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
     path => {
       const map = mapRef.current;
       if (!map || !path || path.length === 0) return;
-      
-      // Her yeni yol geldiğinde veya manuel başlatıldığında state'i sıfırla
-      // Sadece yolun uzunluğu veya ilk/son noktası değişmişse gerçek bir değişim kabul et
-      const isNewPath = !currentPathRef.current || 
-                        path.length !== currentPathRef.current.length ||
-                        (path.length > 0 && (
-                          path[0].fromCoords[0] !== currentPathRef.current[0].fromCoords[0] ||
-                          path[path.length-1].toCoords[0] !== currentPathRef.current[currentPathRef.current.length-1].toCoords[0]
-                        ));
+
+      const isNewPath =
+        !currentPathRef.current ||
+        path.length !== currentPathRef.current.length ||
+        (path.length > 0 &&
+          (path[0].fromCoords[0] !== currentPathRef.current[0].fromCoords[0] ||
+            path[path.length - 1].toCoords[0] !==
+              currentPathRef.current[currentPathRef.current.length - 1].toCoords[0]));
 
       if (isNewPath) {
         currentPathRef.current = path;
@@ -32,8 +28,20 @@ export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
 
       if (!isAnimationActiveRef.current) return;
 
-      if (!map.getSource('animation-icon-source')) {
-        console.warn('Animation source not ready, skipping animation');
+      const sourceReady = () => {
+        try {
+          return mapRef.current?.isStyleLoaded() && !!mapRef.current?.getSource('animation-icon-source');
+        } catch {
+          return false;
+        }
+      };
+
+      if (!sourceReady()) {
+        setTimeout(() => {
+          if (isAnimationActiveRef.current) {
+            animateIconAlongRoute(path);
+          }
+        }, 120);
         return;
       }
 
@@ -42,7 +50,7 @@ export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
       }
 
       const speed = 15;
-      
+
       const animationStep = currentTime => {
         const currentMap = mapRef.current;
         if (!currentMap || !isAnimationActiveRef.current) return;
@@ -54,17 +62,12 @@ export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
         const elapsedTime = (currentTime - segmentStartTimeRef.current) / 1000;
         const currentSegment = path[segmentIndexRef.current];
 
-        // Rota bitti
         if (!currentSegment) {
           const animationSource = currentMap.getSource('animation-icon-source');
           if (animationSource) {
-            animationSource.setData({
-              type: 'FeatureCollection',
-              features: [],
-            });
+            animationSource.setData({ type: 'FeatureCollection', features: [] });
           }
-          
-          // Başa dön ve tekrarla
+
           setTimeout(() => {
             if (isAnimationActiveRef.current) {
               segmentIndexRef.current = 0;
@@ -75,46 +78,38 @@ export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
           return;
         }
 
-        // KAT DEĞİŞİMİ KONTROLÜ
         if (currentSegment.floor !== currentFloor) {
           if (changeFloor) {
             changeFloor(currentSegment.floor);
-            return; 
-          } else {
-            // changeFloor yoksa atla
-            segmentIndexRef.current++;
-            segmentStartTimeRef.current = 0;
-            animationFrameIdRef.current = requestAnimationFrame(animationStep);
             return;
           }
+          segmentIndexRef.current++;
+          segmentStartTimeRef.current = 0;
+          animationFrameIdRef.current = requestAnimationFrame(animationStep);
+          return;
         }
 
         const segmentDistance = currentSegment.distance;
         const segmentDuration = (segmentDistance / speed) * 1000;
         const progress = Math.min((elapsedTime * 1000) / segmentDuration, 1);
-        
+
         const startPoint = currentSegment.fromCoords;
         const endPoint = currentSegment.toCoords;
         const newLng = startPoint[0] + (endPoint[0] - startPoint[0]) * progress;
         const newLat = startPoint[1] + (endPoint[1] - startPoint[1]) * progress;
 
-        const iconData = {
-          type: 'FeatureCollection',
-          features: [
-            {
-              type: 'Feature',
-              geometry: {
-                type: 'Point',
-                coordinates: [newLng, newLat],
-              },
-              properties: {},
-            },
-          ],
-        };
-
         const animationSource = currentMap.getSource('animation-icon-source');
         if (animationSource) {
-          animationSource.setData(iconData);
+          animationSource.setData({
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [newLng, newLat] },
+                properties: {},
+              },
+            ],
+          });
         }
 
         if (progress >= 1) {
@@ -136,21 +131,21 @@ export const useRouteAnimation = ({ mapRef, currentFloor, changeFloor }) => {
       cancelAnimationFrame(animationFrameIdRef.current);
       animationFrameIdRef.current = null;
     }
-    // İkonu temizle
-    if (mapRef.current) {
-      const source = mapRef.current.getSource('animation-icon-source');
-      if (source) {
-        source.setData({ type: 'FeatureCollection', features: [] });
-      }
-    }
+    try {
+      const source = mapRef.current?.isStyleLoaded()
+        ? mapRef.current.getSource('animation-icon-source')
+        : null;
+      if (source) source.setData({ type: 'FeatureCollection', features: [] });
+    } catch {}
   }, [mapRef]);
 
-  const startAnimation = useCallback((path) => {
-    isAnimationActiveRef.current = true;
-    if (path) {
-      animateIconAlongRoute(path);
-    }
-  }, [animateIconAlongRoute]);
+  const startAnimation = useCallback(
+    path => {
+      isAnimationActiveRef.current = true;
+      if (path) animateIconAlongRoute(path);
+    },
+    [animateIconAlongRoute]
+  );
 
   return {
     animateIconAlongRoute,

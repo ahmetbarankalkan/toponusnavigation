@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { calculateAdvancedRoute } from '../utils/advancedRouting.js';
 import { shouldSkipStep } from '../utils/routeHelpers.js';
-import { toAdvancedRouteMode } from '../utils/routeMode.js';
+import { toAdvancedRouteMode, isExploreRouteMode } from '../utils/routeMode.js';
 
 export const useRouteCalculation = ({
   mapRef,
@@ -252,7 +252,7 @@ export const useRouteCalculation = ({
       );
       
       if (setExploreWaypoints) {
-        if (normalizedMode === 'keşfet' && (!targets || targets.length === 0)) {
+        if (isExploreRouteMode(normalizedMode) && (!targets || targets.length === 0)) {
           const fallbackTargets = buildExploreFallbackTargets();
           setExploreWaypoints(fallbackTargets);
         } else {
