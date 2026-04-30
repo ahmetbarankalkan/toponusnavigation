@@ -963,11 +963,32 @@ function selectOptimalTargets(startId, endId, targets, graph, mode, userFavorite
         console.log(`✅ Keşfet: ${strictlyRelevant.length} alakalı hedef seçildi:`, strictlyRelevant.map(t => t.target.name).join(', '));
       }
       
-      return strictlyRelevant.slice(0, 10);
+      if (strictlyRelevant.length > 0) {
+        return strictlyRelevant.slice(0, 10);
+      }
+
+      // Favori var ama birebir eşleşme çıkmadıysa "tepkisiz" kalmamak için
+      // en iyi skorlu en yakın hedefleri fallback olarak döndür.
+      const fallbackRelevant = scoredKeşfet
+        .filter(item => item.finalScore > -1000)
+        .sort((a, b) => b.finalScore - a.finalScore)
+        .slice(0, 2);
+
+      if (fallbackRelevant.length > 0) {
+        console.log(`ℹ️ Keşfet fallback devrede: ${fallbackRelevant.map(t => t.target.name).join(', ')}`);
+      }
+
+      return fallbackRelevant;
     }
 
-    // Misafir: Sadece çok yakın popülerleri göster
-    return scoredKeşfet.filter(item => item.totalDistance < 100).slice(0, 2);
+    // Misafir: Yakın popülerleri tercih et; hiç yoksa en iyi skorlulardan göster
+    const guestNearby = scoredKeşfet.filter(item => item.totalDistance < 100).slice(0, 2);
+    if (guestNearby.length > 0) return guestNearby;
+
+    return scoredKeşfet
+      .filter(item => item.finalScore > -1000)
+      .sort((a, b) => b.finalScore - a.finalScore)
+      .slice(0, 1);
   }
 
   return [];

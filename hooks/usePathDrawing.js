@@ -1,6 +1,17 @@
 import { useCallback } from 'react';
 
 export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
+  const runWhenStyleReady = (map, callback) => {
+    if (!map) return;
+    if (map.isStyleLoaded()) {
+      callback();
+      return;
+    }
+    map.once('styledata', () => {
+      if (map.isStyleLoaded()) callback();
+    });
+  };
+
   const calculateBearing = useCallback((lat1, lon1, lat2, lon2) => {
     const phi1 = (lat1 * Math.PI) / 180;
     const phi2 = (lat2 * Math.PI) / 180;
@@ -16,17 +27,9 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
   const drawPathSafely = useCallback(
     coords => {
       const map = mapRef.current;
-      if (!map) {
-        console.log('No map reference');
-        return;
-      }
-      if (!map.isStyleLoaded()) {
-        console.log('Map style not loaded, retrying...');
-        setTimeout(() => drawPathSafely(coords), 50);
-        return;
-      }
+      if (!map) return;
+
       if (!coords || coords.length === 0) {
-        console.log('🧹 Empty coordinates, clearing path AND arrows');
         try {
           if (map.getSource('path')) {
             map.getSource('path').setData({
@@ -45,14 +48,16 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
         }
         return;
       }
-      console.log(`🎯 Drawing path with ${coords.length} points`);
-      try {
-        // Safari için requestAnimationFrame kullan - daha hızlı render
+
+      runWhenStyleReady(map, () => {
         requestAnimationFrame(() => {
+          if (!map.isStyleLoaded()) return;
+
           const geo = {
             type: 'Feature',
             geometry: { type: 'LineString', coordinates: coords },
           };
+
           if (map.getSource('path')) {
             map.getSource('path').setData(geo);
           } else {
@@ -68,8 +73,9 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
             });
           }
 
-          // Ok işaretlerini ayrı bir frame'de çiz (Safari performansı için)
           requestAnimationFrame(() => {
+            if (!map.isStyleLoaded()) return;
+
             if (coords.length > 1) {
               const arrowPoints = [];
               for (let i = 3; i < coords.length; i += 3) {
@@ -84,13 +90,15 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
                 arrowPoints.push({
                   type: 'Feature',
                   geometry: { type: 'Point', coordinates: current },
-                  properties: { bearing: bearing },
+                  properties: { bearing },
                 });
               }
+
               const arrowGeo = {
                 type: 'FeatureCollection',
                 features: arrowPoints,
               };
+
               if (map.getSource('path-arrows')) {
                 map.getSource('path-arrows').setData(arrowGeo);
               } else {
@@ -113,27 +121,22 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
                   },
                 });
               }
-            } else {
-              if (map.getSource('path-arrows')) {
-                map.getSource('path-arrows').setData({
-                  type: 'FeatureCollection',
-                  features: [],
-                });
-              }
+            } else if (map.getSource('path-arrows')) {
+              map.getSource('path-arrows').setData({
+                type: 'FeatureCollection',
+                features: [],
+              });
             }
 
-            console.log('✅ Path drawn from drawPathSafely');
             if (map.getLayer('animation-icon-layer')) {
               map.moveLayer('animation-icon-layer');
             }
-            if (coords && coords.length > 1) {
+            if (coords.length > 1) {
               fitMapToPath(mapRef.current, coords);
             }
           });
         });
-      } catch (error) {
-        console.error('❌ Path drawing error:', error);
-      }
+      });
     },
     [fitMapToPath, calculateBearing, mapRef]
   );

@@ -7,7 +7,7 @@ import Head from 'next/head';
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get('token');
+  const token = decodeURIComponent((searchParams.get('token') || '').trim());
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

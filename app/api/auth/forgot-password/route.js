@@ -51,8 +51,8 @@ export async function POST(request) {
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const fallbackUrl = `${protocol}://${host}`;
     
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || fallbackUrl).trim();
-    const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
+    const appUrl = fallbackUrl;
+    const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
     const mailOptions = {
       from: `"Toponus Destek" <${process.env.EMAIL_SERVER_USER}>`,

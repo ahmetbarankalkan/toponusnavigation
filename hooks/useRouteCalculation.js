@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { calculateAdvancedRoute } from '../utils/advancedRouting.js';
 import { shouldSkipStep } from '../utils/routeHelpers.js';
+import { toAdvancedRouteMode } from '../utils/routeMode.js';
 
 export const useRouteCalculation = ({
   mapRef,
@@ -27,6 +28,56 @@ export const useRouteCalculation = ({
   allCampaigns = []
 }) => {
   useEffect(() => {
+    const normalizeId = (value) =>
+      String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^f\d+-/, '')
+        .replace(/^room-/, '');
+
+    const buildExploreFallbackTargets = () => {
+      if (!allCampaigns || allCampaigns.length === 0) return [];
+      if (!selectedEndRoom) return [];
+
+      const skippedSet = new Set((skippedWaypoints || []).map(normalizeId));
+      const endId = normalizeId(selectedEndRoom);
+
+      const usedSet = new Set(
+        [
+          ...((userFavorites?.campaigns || []).filter(item => item?.is_used)),
+          ...((userFavorites?.products || []).filter(item => item?.is_used)),
+        ]
+          .flatMap(item => [
+            item.id,
+            item.campaignId,
+            item.productId,
+            item.storeId,
+            item.roomData?.id,
+            item.roomData?.room_id,
+            item.storeName,
+          ])
+          .map(normalizeId)
+          .filter(Boolean)
+      );
+
+      const candidate = allCampaigns.find(camp => {
+        const ids = [
+          camp.id,
+          camp.room_id,
+          camp.originalId,
+          camp.name,
+        ].map(normalizeId);
+
+        const isSkipped = ids.some(id => skippedSet.has(id));
+        const isUsed = ids.some(id => usedSet.has(id));
+        const isDestination = ids.includes(endId);
+
+        return !isSkipped && !isUsed && !isDestination;
+      });
+
+      return candidate ? [{ target: candidate }] : [];
+    };
+
     // Async wrapper function
     const calculateRouteAsync = async () => {
       const map = mapRef.current;
@@ -73,7 +124,8 @@ export const useRouteCalculation = ({
         setRouteSteps([]);
         return;
       }
-      console.log(`🔄 Route calculation starting... Mode: ${routeMode}`);
+      const normalizedMode = toAdvancedRouteMode(routeMode);
+      console.log(`🔄 Route calculation starting... Mode: ${normalizedMode}`);
       console.log(`📍 PlaceId: ${placeId}`);
       console.log(`👤 User Favorites Status: ${userFavorites ? 'Loaded' : 'None'}`);
       console.log(
@@ -162,7 +214,7 @@ export const useRouteCalculation = ({
         startDoorId,
         endDoorId,
         graph,
-        routeMode,
+        normalizedMode,
         preferredTransport,
         allGeoData,
         placeId, // Yer ID'si gerekli
@@ -173,7 +225,12 @@ export const useRouteCalculation = ({
       );
       
       if (setExploreWaypoints) {
-        setExploreWaypoints(targets || []);
+        if (normalizedMode === 'keşfet' && (!targets || targets.length === 0)) {
+          const fallbackTargets = buildExploreFallbackTargets();
+          setExploreWaypoints(fallbackTargets);
+        } else {
+          setExploreWaypoints(targets || []);
+        }
       }
 
       if (path.length === 0) {

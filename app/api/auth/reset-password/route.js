@@ -2,41 +2,66 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 import { getJWTSecret } from '@/utils/auth';
+
+function getCandidateSecrets() {
+  const primary = getJWTSecret().trim();
+  const legacy = (process.env.JWT_SECRET_LEGACY || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return [primary, ...legacy];
+}
+
+function verifyWithCandidateSecrets(token) {
+  const secrets = getCandidateSecrets();
+  let lastError = null;
+
+  for (const secret of secrets) {
+    try {
+      return jwt.verify(token, secret);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Token verification failed');
+}
 
 export async function POST(request) {
   try {
     const { token, newPassword } = await request.json();
+    const normalizedToken = decodeURIComponent((token || '').trim()).replace(/\s/g, '');
 
-    if (!token || !newPassword) {
+    if (!normalizedToken || !newPassword) {
       return NextResponse.json(
-        { success: false, error: 'Token ve yeni şifre gereklidir' },
+        { success: false, error: 'Token ve yeni sifre gereklidir' },
         { status: 400 }
       );
     }
 
     if (newPassword.length < 6) {
       return NextResponse.json(
-        { success: false, error: 'Şifre en az 6 karakter olmalıdır' },
+        { success: false, error: 'Sifre en az 6 karakter olmalidir' },
         { status: 400 }
       );
     }
 
-    // Token'ı doğrula
     let decoded;
     try {
-      decoded = jwt.verify(token, getJWTSecret());
+      decoded = verifyWithCandidateSecrets(normalizedToken);
     } catch (err) {
+      console.error('Reset password token verify failed:', err?.name || err?.message || err);
       return NextResponse.json(
-        { success: false, error: 'Geçersiz veya süresi dolmuş bağlantı' },
+        { success: false, error: 'Gecersiz veya suresi dolmus baglanti' },
         { status: 401 }
       );
     }
 
     if (decoded.type !== 'password-reset') {
       return NextResponse.json(
-        { success: false, error: 'Geçersiz işlem tipi' },
+        { success: false, error: 'Gecersiz islem tipi' },
         { status: 401 }
       );
     }
@@ -46,23 +71,22 @@ export async function POST(request) {
     const user = await User.findById(decoded.userId);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Kullanıcı bulunamadı' },
+        { success: false, error: 'Kullanici bulunamadi' },
         { status: 404 }
       );
     }
 
-    // Şifreyi güncelle (User modelindeki pre-save hook otomatik hash'leyecek)
     user.password = newPassword;
     await user.save();
 
     return NextResponse.json({
       success: true,
-      message: 'Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.',
+      message: 'Sifreniz basariyla guncellendi. Giris yapabilirsiniz.',
     });
   } catch (error) {
-    console.error('Şifre güncelleme hatası:', error);
+    console.error('Sifre guncelleme hatasi:', error);
     return NextResponse.json(
-      { success: false, error: 'Bir hata oluştu' },
+      { success: false, error: 'Bir hata olustu' },
       { status: 500 }
     );
   }

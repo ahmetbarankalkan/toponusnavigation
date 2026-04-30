@@ -117,6 +117,7 @@ import {
 } from '../utils/dijkstra.js';
 import { calculateAdvancedRoute } from '../utils/advancedRouting.js';
 import { detectUserLocation } from '../utils/locationHelpers.js';
+import { isExploreRouteMode } from '../utils/routeMode.js';
 
 const StarRating = nextDynamic(() => import('@/components/Rating/StarRating'), {
   ssr: false,
@@ -272,6 +273,7 @@ function MapContent() {
   const [showLocationCloseConfirm, setShowLocationCloseConfirm] = useState(false);
   const [locationMarkerCoords, setLocationMarkerCoords] = useState(null);
   const [locationMarkerFloor, setLocationMarkerFloor] = useState(0);
+  const [isMapContainerReady, setIsMapContainerReady] = useState(false);
   const qrProcessedRef = useRef(false);
 
   // Define changeFloor before it's used in other hooks
@@ -321,6 +323,7 @@ function MapContent() {
 
     if (discoverParam === 'true') {
       setIsDiscoverOpen(true);
+      setRouteMode('kesfet');
       setActiveNavItem(1);
       setDiscoverHeight(50);
       // URL'den parametreyi temizle
@@ -1213,7 +1216,7 @@ function MapContent() {
 
       // Keşfet modunda aktif mağazanın originalId'sini bul
       let discoverRoomId = null;
-      if (routeMode === 'keşfet' && currentExploreStop?.target) {
+      if (isExploreRouteMode(routeMode) && currentExploreStop?.target) {
         const target = currentExploreStop.target;
         const targetRoomId = target.room_id || target.id || '';
         const targetName = target.name || '';
@@ -1624,7 +1627,7 @@ function MapContent() {
     if (!mapCenter || mapCenter[0] === 0 || mapCenter[1] === 0) {
       return;
     }
-    if (!mapContainerRef.current) {
+    if (!mapContainerRef.current || !isMapContainerReady) {
       return;
     }
     if (mapRef.current) {
@@ -2150,7 +2153,35 @@ function MapContent() {
       }
     });
     setTimeout(updateRoomClickHandlers, 1000);
-  }, [mapCenter, mapZoom]);
+  }, [mapCenter, mapZoom, isMapContainerReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const safeResize = () => {
+      try {
+        if (mapRef.current) {
+          mapRef.current.resize();
+        }
+      } catch (e) {
+        console.warn('Map resize skipped:', e);
+      }
+    };
+
+    safeResize();
+    const timeoutId = setTimeout(safeResize, 150);
+    window.addEventListener('resize', safeResize);
+    window.addEventListener('focus', safeResize);
+    document.addEventListener('visibilitychange', safeResize);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', safeResize);
+      window.removeEventListener('focus', safeResize);
+      document.removeEventListener('visibilitychange', safeResize);
+    };
+  }, [activeNavItem, isDiscoverOpen, showStoreRating, isAssistantOpen]);
 
   useEffect(() => {
     return () => {
@@ -2414,7 +2445,7 @@ function MapContent() {
               waypoint={currentExploreStop}
               onSkip={handleSkipWaypoint}
               onVisit={handleVisitWaypoint}
-              isHidden={isKioskMode || isCardMinimized || activeNavItem !== 0 || routeMode !== 'keşfet' || !currentExploreStop}
+              isHidden={isKioskMode || isCardMinimized || activeNavItem !== 0 || !isExploreRouteMode(routeMode) || !currentExploreStop}
             />
             <MobileRouteCard
               isKioskMode={isKioskMode}
@@ -2438,7 +2469,10 @@ function MapContent() {
           <div
             className="w-full h-full"
             style={{ backgroundColor: 'transparent' }}
-            ref={mapContainerRef}
+            ref={el => {
+              mapContainerRef.current = el;
+              setIsMapContainerReady(!!el);
+            }}
             onClick={() => {}}
           />
           {isSelectingStartRoom && selectedEndRoom && (
@@ -3043,6 +3077,7 @@ function MapContent() {
             setIsDiscoverOpen(false);
             setIsAssistantOpen(false);
             if (room) {
+              setRouteMode('kesfet');
               setSelectedEndRoom(room.id);
               setEndQuery(room.name);
               setIsSelectingStartRoom(true);
