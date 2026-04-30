@@ -28,6 +28,19 @@ export const useRouteCalculation = ({
   allCampaigns = []
 }) => {
   useEffect(() => {
+    const clearMapSourceSafely = (map, sourceId, emptyData) => {
+      if (!map) return;
+      try {
+        if (!map.isStyleLoaded()) return;
+        const source = map.getSource(sourceId);
+        if (source) {
+          source.setData(emptyData);
+        }
+      } catch (error) {
+        console.warn(`Source clear skipped (${sourceId}):`, error?.message || error);
+      }
+    };
+
     const normalizeId = (value) =>
       String(value || '')
         .trim()
@@ -107,12 +120,10 @@ export const useRouteCalculation = ({
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
       }
-      if (map && map.getSource('animation-icon-source')) {
-        map.getSource('animation-icon-source').setData({
-          type: 'FeatureCollection',
-          features: [],
-        });
-      }
+      clearMapSourceSafely(map, 'animation-icon-source', {
+        type: 'FeatureCollection',
+        features: [],
+      });
       if (!graph || !selectedStartRoom || !selectedEndRoom) {
         setTotalDistance(0);
         setRouteByFloor({});
@@ -122,20 +133,14 @@ export const useRouteCalculation = ({
           cancelAnimationFrame(animationFrameIdRef.current);
           animationFrameIdRef.current = null;
         }
-        if (map && map.isStyleLoaded()) {
-          if (map.getSource('animation-icon-source')) {
-            map.getSource('animation-icon-source').setData({
-              type: 'FeatureCollection',
-              features: [],
-            });
-          }
-          if (map.getSource('path')) {
-            map.getSource('path').setData({
-              type: 'Feature',
-              geometry: { type: 'LineString', coordinates: [] },
-            });
-          }
-        }
+        clearMapSourceSafely(map, 'animation-icon-source', {
+          type: 'FeatureCollection',
+          features: [],
+        });
+        clearMapSourceSafely(map, 'path', {
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: [] },
+        });
         return;
       }
       const startRoom = rooms.find(r => r.id === selectedStartRoom);
