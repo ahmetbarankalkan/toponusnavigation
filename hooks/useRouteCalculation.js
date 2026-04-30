@@ -39,6 +39,27 @@ export const useRouteCalculation = ({
       if (!allCampaigns || allCampaigns.length === 0) return [];
       if (!selectedEndRoom) return [];
 
+      const favoriteSet = new Set(
+        [
+          ...(userFavorites?.favorites || []),
+          ...(userFavorites?.campaigns || []),
+          ...(userFavorites?.products || []),
+        ]
+          .flatMap(item => [
+            item.id,
+            item.storeId,
+            item.campaignId,
+            item.productId,
+            item.roomData?.id,
+            item.roomData?.room_id,
+            item.storeName,
+            item.productData?.storeId,
+          ])
+          .map(normalizeId)
+          .filter(Boolean)
+      );
+      if (favoriteSet.size === 0) return [];
+
       const skippedSet = new Set((skippedWaypoints || []).map(normalizeId));
       const endId = normalizeId(selectedEndRoom);
 
@@ -68,11 +89,12 @@ export const useRouteCalculation = ({
           camp.name,
         ].map(normalizeId);
 
+        const isFavoriteMatch = ids.some(id => favoriteSet.has(id));
         const isSkipped = ids.some(id => skippedSet.has(id));
         const isUsed = ids.some(id => usedSet.has(id));
         const isDestination = ids.includes(endId);
 
-        return !isSkipped && !isUsed && !isDestination;
+        return isFavoriteMatch && !isSkipped && !isUsed && !isDestination;
       });
 
       return candidate ? [{ target: candidate }] : [];

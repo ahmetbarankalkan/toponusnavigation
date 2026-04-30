@@ -130,14 +130,11 @@ async function calculateSpecialRoute(
   const startFloor = graph[startId]?.floor;
   const endFloor = graph[endId]?.floor;
 
-  // Hedef mağazaları yükle: Keşfet modunda tüm kampanyaları baz al, spor modunda sadece popülerleri
+  // Hedef mağazaları yükle:
+  // - Keşfet modunda taban havuz boş başlar, sadece favorilerden beslenir
+  // - Spor modunda mevcut popüler havuz kullanılır
   let targetStores = [];
-  if (mode === 'keşfet' && allCampaigns && allCampaigns.length > 0) {
-    targetStores = allCampaigns.map(c => ({
-      ...c,
-      room_id: c.room_id || c.id
-    }));
-  } else {
+  if (mode !== 'keşfet') {
     targetStores = await loadTargetStores(placeId, mode);
   }
   
