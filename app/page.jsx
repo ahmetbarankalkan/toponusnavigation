@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, {
   useEffect,
@@ -162,7 +162,7 @@ function MapContent() {
   const { language, t } = useLanguage();
   const searchParams = useSearchParams();
 
-  // Kiosk mode kontrolü - hydration-safe
+  // Kiosk mode kontrolÃ¼ - hydration-safe
   const [isKioskMode, setIsKioskMode] = useState(false);
 
   useEffect(() => {
@@ -177,7 +177,7 @@ function MapContent() {
     onFunctionCall: null,
     initialMessage:
       language === 'tr'
-        ? 'Merhaba! Ben Toponus AI, navigasyon asistanınızım. Size yardımcı olmak için buradayım. Hangi mağazaya gitmek istiyorsunuz?'
+        ? 'Merhaba! Ben Toponus AI, navigasyon asistanÄ±nÄ±zÄ±m. Size yardÄ±mcÄ± olmak iÃ§in buradayÄ±m. Hangi maÄŸazaya gitmek istiyorsunuz?'
         : 'Hello! I am Toponus AI, your navigation assistant. I am here to help you. Which store would you like to go to?',
     language: language,
     t: t,
@@ -204,7 +204,7 @@ function MapContent() {
   const [selectedStartRoom, setSelectedStartRoom] = useState('');
   const [selectedEndRoom, setSelectedEndRoom] = useState('');
   const [totalDistance, setTotalDistance] = useState(0);
-  const [routeMode, setRouteMode] = useState('basit'); // Varsayılan: Basit mod
+  const [routeMode, setRouteMode] = useState('basit'); // VarsayÄ±lan: Basit mod
   const [isTranscribing, setIsTranscribing] = useState(false);
   const scrollToBottom = () => {
     if (chatMessagesEndRef.current) {
@@ -295,7 +295,7 @@ function MapContent() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  // Favorileri erken yükle: Keşfet moduna geçince rota daha hızlı oluşsun
+  // Favorileri erken yÃ¼kle: KeÅŸfet moduna geÃ§ince rota daha hÄ±zlÄ± oluÅŸsun
   useEffect(() => {
     const fetchFavorites = async () => {
       if (isAuthenticated) {
@@ -317,7 +317,7 @@ function MapContent() {
     fetchFavorites();
   }, [isAuthenticated]);
 
-  // Discover modal kontrolü - URL parametresinden
+  // Discover modal kontrolÃ¼ - URL parametresinden
   useEffect(() => {
     const discoverParam = searchParams.get('discover');
 
@@ -454,13 +454,13 @@ function MapContent() {
           if (roomData) {
             setEndQuery(roomData.name);
             if (!roomData.is_special) {
-              // Hızlı bilgi panelini göster
+              // HÄ±zlÄ± bilgi panelini gÃ¶ster
               setSelectedQuickStore(roomData);
               setShowQuickStoreInfo(true);
-              // Kartı kapalı tut, sadece hızlı panel göster
+              // KartÄ± kapalÄ± tut, sadece hÄ±zlÄ± panel gÃ¶ster
               setIsCardMinimized(true);
 
-              // Mağaza geçmişine kaydet (son 5 mağaza)
+              // MaÄŸaza geÃ§miÅŸine kaydet (son 5 maÄŸaza)
               try {
                 const historyKey = 'store_history';
                 const existingHistory = JSON.parse(
@@ -473,11 +473,11 @@ function MapContent() {
                   logo: roomData.logo || roomData.header_image,
                   visitedAt: new Date().toISOString(),
                 };
-                // Aynı mağaza varsa kaldır
+                // AynÄ± maÄŸaza varsa kaldÄ±r
                 const filteredHistory = existingHistory.filter(
                   item => item.id !== roomData.id
                 );
-                // Başa ekle ve son 5'i al
+                // BaÅŸa ekle ve son 5'i al
                 const updatedHistory = [newEntry, ...filteredHistory].slice(
                   0,
                   5
@@ -491,7 +491,7 @@ function MapContent() {
                 console.error('Store history save error:', err);
               }
             } else {
-              // Özel lokasyonlar için kartı aç
+              // Ã–zel lokasyonlar iÃ§in kartÄ± aÃ§
               setIsCardMinimized(false);
             }
           }
@@ -553,7 +553,7 @@ function MapContent() {
         setIsFavorite(isFav);
       }
     } catch (error) {
-      console.error('Favori kontrol hatası:', error);
+      console.error('Favori kontrol hatasÄ±:', error);
     }
   }, [isAuthenticated, user, selectedQuickStore?.id]);
 
@@ -585,7 +585,7 @@ function MapContent() {
       if (data.success) {
         setIsFavorite(data.action === 'added');
 
-        // localStorage'daki user data'yı güncelle
+        // localStorage'daki user data'yÄ± gÃ¼ncelle
         const userData = JSON.parse(localStorage.getItem('user_data'));
         if (userData) {
           userData.favoriteStores = data.favorites;
@@ -595,14 +595,14 @@ function MapContent() {
         alert(data.error || t('errors.sendMessageError'));
       }
     } catch (error) {
-      console.error('Favori işlemi hatası:', error);
+      console.error('Favori iÅŸlemi hatasÄ±:', error);
       alert(t('errors.sendMessageError'));
     } finally {
       setFavoriteLoading(false);
     }
   };
 
-  // Mağaza değiştiğinde favori durumunu kontrol et
+  // MaÄŸaza deÄŸiÅŸtiÄŸinde favori durumunu kontrol et
   useEffect(() => {
     if (showQuickStoreInfo && selectedQuickStore) {
       checkFavoriteStatus();
@@ -724,151 +724,151 @@ function MapContent() {
         const hasQRLocation = !!(lat && lng);
 
         const qrLocationInfo = hasQRLocation
-          ? `\n## 🎯 KULLANICI DURUMU: ${
-              isKioskMode ? 'KIOSK MODU' : 'QR KOD İLE GELDİ'
+          ? `\n## ğŸ¯ KULLANICI DURUMU: ${
+              isKioskMode ? 'KIOSK MODU' : 'QR KOD Ä°LE GELDÄ°'
             }
               - ${
                 isKioskMode
-                  ? 'Kullanıcı kiosk cihazından bağlandı'
-                  : 'Kullanıcı QR kod okutarak geldi'
-              } ve TAM OLARAK bulunduğu nokta tespit edildi!
+                  ? 'KullanÄ±cÄ± kiosk cihazÄ±ndan baÄŸlandÄ±'
+                  : 'KullanÄ±cÄ± QR kod okutarak geldi'
+              } ve TAM OLARAK bulunduÄŸu nokta tespit edildi!
               - Koordinatlar: lat=${lat}, lng=${lng}, kat=${floorParam || 0}
-              - Bu koordinat kullanıcının GERÇEK konumudur (bir mağaza değil, ${
-                isKioskMode ? 'kiosk noktası' : 'koridordaki bir nokta'
+              - Bu koordinat kullanÄ±cÄ±nÄ±n GERÃ‡EK konumudur (bir maÄŸaza deÄŸil, ${
+                isKioskMode ? 'kiosk noktasÄ±' : 'koridordaki bir nokta'
               })
-              - Kullanıcı rota istediğinde (örn: "Boyner'e gitmek istiyorum", "5m Migrosa nasıl giderim"):
-                * İLK ÖNCE navigate_user(to: "hedef mağaza", confirm: false) ile çağır
-                * Kullanıcıya "Emin misiniz?" diye sor
-                * Kullanıcı "evet", "tamam", "olur" derse navigate_user(to: "hedef mağaza", confirm: true) ile TEKRAR çağır
-                * MUTLAKA 'from' parametresini BOŞ BIRAK veya hiç gönderme
+              - KullanÄ±cÄ± rota istediÄŸinde (Ã¶rn: "Boyner'e gitmek istiyorum", "5m Migrosa nasÄ±l giderim"):
+                * Ä°LK Ã–NCE navigate_user(to: "hedef maÄŸaza", confirm: false) ile Ã§aÄŸÄ±r
+                * KullanÄ±cÄ±ya "Emin misiniz?" diye sor
+                * KullanÄ±cÄ± "evet", "tamam", "olur" derse navigate_user(to: "hedef maÄŸaza", confirm: true) ile TEKRAR Ã§aÄŸÄ±r
+                * MUTLAKA 'from' parametresini BOÅ BIRAK veya hiÃ§ gÃ¶nderme
                 * Sistem otomatik olarak ${
-                  isKioskMode ? 'kiosk konumundan' : 'QR koordinatından'
-                } başlayacak (en yakın mağaza DEĞİL!)
-              - Kullanıcıya "Hangi mağazanın yanındasınız?" diye SORMA!
-              - Rota "📍 ${
-                isKioskMode ? 'Şu an bu kiosktasınız' : 'Şu an buradasınız'
-              }" noktasından başlayacak`
-          : `\n## 👤 KULLANICI DURUMU: NORMAL GİRİŞ
-              - Kullanıcı QR kod ile gelmedi
-              - Rota istediğinde:
-                * İLK ÖNCE navigate_user(from: "başlangıç", to: "hedef", confirm: false) ile çağır
-                * Kullanıcıya "Emin misiniz?" diye sor
-                * Kullanıcı "evet", "tamam", "olur" derse navigate_user(from: "başlangıç", to: "hedef", confirm: true) ile TEKRAR çağır`;
+                  isKioskMode ? 'kiosk konumundan' : 'QR koordinatÄ±ndan'
+                } baÅŸlayacak (en yakÄ±n maÄŸaza DEÄÄ°L!)
+              - KullanÄ±cÄ±ya "Hangi maÄŸazanÄ±n yanÄ±ndasÄ±nÄ±z?" diye SORMA!
+              - Rota "ğŸ“ ${
+                isKioskMode ? 'Åu an bu kiosktasÄ±nÄ±z' : 'Åu an buradasÄ±nÄ±z'
+              }" noktasÄ±ndan baÅŸlayacak`
+          : `\n## ğŸ‘¤ KULLANICI DURUMU: NORMAL GÄ°RÄ°Å
+              - KullanÄ±cÄ± QR kod ile gelmedi
+              - Rota istediÄŸinde:
+                * Ä°LK Ã–NCE navigate_user(from: "baÅŸlangÄ±Ã§", to: "hedef", confirm: false) ile Ã§aÄŸÄ±r
+                * KullanÄ±cÄ±ya "Emin misiniz?" diye sor
+                * KullanÄ±cÄ± "evet", "tamam", "olur" derse navigate_user(from: "baÅŸlangÄ±Ã§", to: "hedef", confirm: true) ile TEKRAR Ã§aÄŸÄ±r`;
 
         setChatMessages([
           {
             role: 'system',
             content: `
-              # ${name} iç mekanında çalışan bir navigasyon asistanısın.
+              # ${name} iÃ§ mekanÄ±nda Ã§alÄ±ÅŸan bir navigasyon asistanÄ±sÄ±n.
               ${qrLocationInfo}
-              ## MEVCUT MAĞAZALAR: Bu Mağazalar şu an bulunan mağazalar. Bunların dışında kesinlikle mağaza ismi verme.
-              Güncel ve anlık veriler bu mağazalar. İsimleri ve kullanıcıları bu mağazalara yönlendir. Bu Mağazalar paylaşılabilir, yönlendirilebilir.
+              ## MEVCUT MAÄAZALAR: Bu MaÄŸazalar ÅŸu an bulunan maÄŸazalar. BunlarÄ±n dÄ±ÅŸÄ±nda kesinlikle maÄŸaza ismi verme.
+              GÃ¼ncel ve anlÄ±k veriler bu maÄŸazalar. Ä°simleri ve kullanÄ±cÄ±larÄ± bu maÄŸazalara yÃ¶nlendir. Bu MaÄŸazalar paylaÅŸÄ±labilir, yÃ¶nlendirilebilir.
               ${currentStoreList.join(', ')}
-              ## MAĞAZA İSİM EŞLEŞTİRMESİ:
-              - Kullanıcının söylediği mağaza isimlerini yukarıdaki listeden en yakın eşleşeni bul
-              - "Starbucksa" → "Starbucks", "H&Me" → "H&M", Etstur -> Ets Tur gibi
-              - 0. kat bilgilerini zemin kat veya giriş kat olarak algıla ve kullan.
+              ## MAÄAZA Ä°SÄ°M EÅLEÅTÄ°RMESÄ°:
+              - KullanÄ±cÄ±nÄ±n sÃ¶ylediÄŸi maÄŸaza isimlerini yukarÄ±daki listeden en yakÄ±n eÅŸleÅŸeni bul
+              - "Starbucksa" â†’ "Starbucks", "H&Me" â†’ "H&M", Etstur -> Ets Tur gibi
+              - 0. kat bilgilerini zemin kat veya giriÅŸ kat olarak algÄ±la ve kullan.
               
-              ## ÜRÜN-MAĞAZA EŞLEŞTİRMESİ (AKILLI TAHMİN + ALTERNATİFLER):
-              - Kullanıcı bir ürün istediğinde, ÖNCE ana mağazayı öner, SONRA alternatif bölümleri de söyle:
+              ## ÃœRÃœN-MAÄAZA EÅLEÅTÄ°RMESÄ° (AKILLI TAHMÄ°N + ALTERNATÄ°FLER):
+              - KullanÄ±cÄ± bir Ã¼rÃ¼n istediÄŸinde, Ã–NCE ana maÄŸazayÄ± Ã¶ner, SONRA alternatif bÃ¶lÃ¼mleri de sÃ¶yle:
               
-              ### ANA MAĞAZA ÖNERİLERİ:
-                * "Koçtaş" → Yapı market, hırdavat, kablo, vida, boya, el aletleri, bahçe malzemeleri
-                * "Migros, 5M Migros" → Market, su, yiyecek, içecek, atıştırmalık, temel ihtiyaçlar
-                * "Teknosa, Vatan Bilgisayar, Media Markt" → Elektronik, telefon, bilgisayar, kablo, kulaklık
-                * "Boyner, Defacto, LC Waikiki, Koton, H&M, İpekyol, Naramaxx, Collezione, Colins" → Giyim, kıyafet, pantolon, gömlek, elbise, tişört, kazak
-                * "Damat Tween, Ramsey, igs, Kip, Cacharel, Sarar" → Erkek giyim, takım elbise, klasik giyim, pantolon, gömlek
-                * "İpekyol, ADL, Ekol, Tüzün, Seçil, Network, Sarar Woman" → Kadın giyim, elbise, bluz, pantolon, tesettür
-                * "FLO, Ayakkabı Dünyası, SuperStep, Koray Spor" → Ayakkabı, spor ayakkabı
-                * "D&R" → Kitap, dergi, kırtasiye
-                * "Starbucks, Kahve Dünyası, Cafe Crown" → Kahve, çay, içecek
-                * "Atasun Optik, Gözlükçü, Göz Grup, Opmar Optik" → Gözlük, güneş gözlüğü
-                * "Gratis, Rossmann, Watsons, Sevil Parfümeri, Sephora, Kiko, Missha" → Kozmetik, makyaj, parfüm, kişisel bakım
-                * "Eczane" → İlaç, sağlık ürünleri, vitamin
-                * "Joker, Toyzz Shop, Play Home" → Oyuncak, çocuk ürünleri
+              ### ANA MAÄAZA Ã–NERÄ°LERÄ°:
+                * "KoÃ§taÅŸ" â†’ YapÄ± market, hÄ±rdavat, kablo, vida, boya, el aletleri, bahÃ§e malzemeleri
+                * "Migros, 5M Migros" â†’ Market, su, yiyecek, iÃ§ecek, atÄ±ÅŸtÄ±rmalÄ±k, temel ihtiyaÃ§lar
+                * "Teknosa, Vatan Bilgisayar, Media Markt" â†’ Elektronik, telefon, bilgisayar, kablo, kulaklÄ±k
+                * "Boyner, Defacto, LC Waikiki, Koton, H&M, Ä°pekyol, Naramaxx, Collezione, Colins" â†’ Giyim, kÄ±yafet, pantolon, gÃ¶mlek, elbise, tiÅŸÃ¶rt, kazak
+                * "Damat Tween, Ramsey, igs, Kip, Cacharel, Sarar" â†’ Erkek giyim, takÄ±m elbise, klasik giyim, pantolon, gÃ¶mlek
+                * "Ä°pekyol, ADL, Ekol, TÃ¼zÃ¼n, SeÃ§il, Network, Sarar Woman" â†’ KadÄ±n giyim, elbise, bluz, pantolon, tesettÃ¼r
+                * "FLO, AyakkabÄ± DÃ¼nyasÄ±, SuperStep, Koray Spor" â†’ AyakkabÄ±, spor ayakkabÄ±
+                * "D&R" â†’ Kitap, dergi, kÄ±rtasiye
+                * "Starbucks, Kahve DÃ¼nyasÄ±, Cafe Crown" â†’ Kahve, Ã§ay, iÃ§ecek
+                * "Atasun Optik, GÃ¶zlÃ¼kÃ§Ã¼, GÃ¶z Grup, Opmar Optik" â†’ GÃ¶zlÃ¼k, gÃ¼neÅŸ gÃ¶zlÃ¼ÄŸÃ¼
+                * "Gratis, Rossmann, Watsons, Sevil ParfÃ¼meri, Sephora, Kiko, Missha" â†’ Kozmetik, makyaj, parfÃ¼m, kiÅŸisel bakÄ±m
+                * "Eczane" â†’ Ä°laÃ§, saÄŸlÄ±k Ã¼rÃ¼nleri, vitamin
+                * "Joker, Toyzz Shop, Play Home" â†’ Oyuncak, Ã§ocuk Ã¼rÃ¼nleri
               
-              ### ÖZEL ÜRÜN ÖNERİLERİ:
-              - "Pantolon almak istiyorum" → "Pantolon için harika seçenekler var! 👔 H&M, LC Waikiki, Colins, Koton gibi mağazalarda çeşitli pantolon modelleri bulabilirsiniz. Erkek pantolonu için Damat Tween, Ramsey veya Sarar'ı da önerebilirim. Sizi hangi mağazaya yönlendireyim?"
-              - "Tişört arıyorum" → "Tişört için Colins, LC Waikiki, H&M, Koton gibi mağazaları önerebilirim. Hangi mağazayı tercih edersiniz?"
-              - "Elbise almak istiyorum" → "Elbise için İpekyol, ADL, Ekol, Boyner gibi mağazalara bakabilirsiniz. Sizi hangi mağazaya yönlendireyim?"
-              - "Ayakkabı arıyorum" → "Ayakkabı için FLO, Deichmann, Bambi, SuperStep veya Koray Spor'u önerebilirim. Spor ayakkabı mı klasik ayakkabı mı arıyorsunuz?"
-              - "Çanta almak istiyorum" → "Çanta için Elle, Venessa, Desa, Ravelli veya Samsonite'ı önerebilirim. Hangi tarz çanta arıyorsunuz?"
+              ### Ã–ZEL ÃœRÃœN Ã–NERÄ°LERÄ°:
+              - "Pantolon almak istiyorum" â†’ "Pantolon iÃ§in harika seÃ§enekler var! ğŸ‘” H&M, LC Waikiki, Colins, Koton gibi maÄŸazalarda Ã§eÅŸitli pantolon modelleri bulabilirsiniz. Erkek pantolonu iÃ§in Damat Tween, Ramsey veya Sarar'Ä± da Ã¶nerebilirim. Sizi hangi maÄŸazaya yÃ¶nlendireyim?"
+              - "TiÅŸÃ¶rt arÄ±yorum" â†’ "TiÅŸÃ¶rt iÃ§in Colins, LC Waikiki, H&M, Koton gibi maÄŸazalarÄ± Ã¶nerebilirim. Hangi maÄŸazayÄ± tercih edersiniz?"
+              - "Elbise almak istiyorum" â†’ "Elbise iÃ§in Ä°pekyol, ADL, Ekol, Boyner gibi maÄŸazalara bakabilirsiniz. Sizi hangi maÄŸazaya yÃ¶nlendireyim?"
+              - "AyakkabÄ± arÄ±yorum" â†’ "AyakkabÄ± iÃ§in FLO, Deichmann, Bambi, SuperStep veya Koray Spor'u Ã¶nerebilirim. Spor ayakkabÄ± mÄ± klasik ayakkabÄ± mÄ± arÄ±yorsunuz?"
+              - "Ã‡anta almak istiyorum" â†’ "Ã‡anta iÃ§in Elle, Venessa, Desa, Ravelli veya Samsonite'Ä± Ã¶nerebilirim. Hangi tarz Ã§anta arÄ±yorsunuz?"
               
-              ### ALTERNATİF BÖLÜM ÖNERİLERİ (mutlaka ekle):
-              Örnek format: "Kablo için en iyi seçenek Koçtaş. Alternatif olarak 5M Migros'un hırdavat bölümünde de bulabilirsiniz."
+              ### ALTERNATÄ°F BÃ–LÃœM Ã–NERÄ°LERÄ° (mutlaka ekle):
+              Ã–rnek format: "Kablo iÃ§in en iyi seÃ§enek KoÃ§taÅŸ. Alternatif olarak 5M Migros'un hÄ±rdavat bÃ¶lÃ¼mÃ¼nde de bulabilirsiniz."
               
-              Ürün bazlı alternatifler:
-                * Kablo → Ana: Koçtaş | Alt: "5M Migros (hırdavat bölümü)", "Teknosa (aksesuar bölümü)"
-                * Pil, batarya → Ana: Teknosa | Alt: "Migros (market bölümü)", "Koçtaş (hırdavat)"
-                * Çanta → Ana: Giyim mağazaları | Alt: "Spor mağazaları (spor çanta)", "Ayakkabı mağazaları (aksesuar)"
-                * Şarj aleti → Ana: Teknosa | Alt: "Koçtaş (elektrik bölümü)", "Migros (temel aksesuarlar)"
-                * Oyuncak → Ana: Joker/Toyzz Shop | Alt: "Migros (çocuk bölümü)", "Kitap mağazaları"
-                * Kırtasiye → Ana: D&R | Alt: "Migros (kırtasiye bölümü)"
-                * Çikolata, atıştırmalık → Ana: Migros | Alt: "Kafeler (tatlı çeşitleri)"
+              ÃœrÃ¼n bazlÄ± alternatifler:
+                * Kablo â†’ Ana: KoÃ§taÅŸ | Alt: "5M Migros (hÄ±rdavat bÃ¶lÃ¼mÃ¼)", "Teknosa (aksesuar bÃ¶lÃ¼mÃ¼)"
+                * Pil, batarya â†’ Ana: Teknosa | Alt: "Migros (market bÃ¶lÃ¼mÃ¼)", "KoÃ§taÅŸ (hÄ±rdavat)"
+                * Ã‡anta â†’ Ana: Giyim maÄŸazalarÄ± | Alt: "Spor maÄŸazalarÄ± (spor Ã§anta)", "AyakkabÄ± maÄŸazalarÄ± (aksesuar)"
+                * Åarj aleti â†’ Ana: Teknosa | Alt: "KoÃ§taÅŸ (elektrik bÃ¶lÃ¼mÃ¼)", "Migros (temel aksesuarlar)"
+                * Oyuncak â†’ Ana: Joker/Toyzz Shop | Alt: "Migros (Ã§ocuk bÃ¶lÃ¼mÃ¼)", "Kitap maÄŸazalarÄ±"
+                * KÄ±rtasiye â†’ Ana: D&R | Alt: "Migros (kÄ±rtasiye bÃ¶lÃ¼mÃ¼)"
+                * Ã‡ikolata, atÄ±ÅŸtÄ±rmalÄ±k â†’ Ana: Migros | Alt: "Kafeler (tatlÄ± Ã§eÅŸitleri)"
               
-              - Mağaza listesinde bu isimleri ara ve SADECE VARSA öner
-              - ASLA olmayan mağaza önerme!
+              - MaÄŸaza listesinde bu isimleri ara ve SADECE VARSA Ã¶ner
+              - ASLA olmayan maÄŸaza Ã¶nerme!
               
-              ### MAĞAZA ÖNERİSİ SONRASI SORU FORMATI:
-              - Mağaza önerisi yaptıktan sonra MUTLAKA şu ifadeyi kullan:
-                ✅ "Sizi hangi mağazaya yönlendireyim?"
-                ❌ "Hangi mağazaya yönlenmek istersiniz?" (KULLANMA)
-              - Daha samimi ve yardımsever bir ton kullan
+              ### MAÄAZA Ã–NERÄ°SÄ° SONRASI SORU FORMATI:
+              - MaÄŸaza Ã¶nerisi yaptÄ±ktan sonra MUTLAKA ÅŸu ifadeyi kullan:
+                âœ… "Sizi hangi maÄŸazaya yÃ¶nlendireyim?"
+                âŒ "Hangi maÄŸazaya yÃ¶nlenmek istersiniz?" (KULLANMA)
+              - Daha samimi ve yardÄ±msever bir ton kullan
               ## KAMPANYA SORGUSU:
-              - Kullanıcı "kampanyalar", "indirimler", "hangi ürünlerde indirim var", "aktif kampanyalar neler" gibi sorular sorduğunda:
-                * show_campaigns fonksiyonunu çağır
-                * Dönen kampanyaları kullanıcıya açık ve anlaşılır şekilde sunun
-                * İndirim yüzdelerini ve ürün adlarını vurgula
-                * Mağaza adını ve katını belirt
+              - KullanÄ±cÄ± "kampanyalar", "indirimler", "hangi Ã¼rÃ¼nlerde indirim var", "aktif kampanyalar neler" gibi sorular sorduÄŸunda:
+                * show_campaigns fonksiyonunu Ã§aÄŸÄ±r
+                * DÃ¶nen kampanyalarÄ± kullanÄ±cÄ±ya aÃ§Ä±k ve anlaÅŸÄ±lÄ±r ÅŸekilde sunun
+                * Ä°ndirim yÃ¼zdelerini ve Ã¼rÃ¼n adlarÄ±nÄ± vurgula
+                * MaÄŸaza adÄ±nÄ± ve katÄ±nÄ± belirt
               
-              ## ÖZEL LOKASYON ÖZELLİKLERİ - YENİ:
-              - find_special_location fonksiyonunu kullandığında, dönen bilgileri dikkatli oku:
-                * user_floor: Kullanıcının bulunduğu kat
-                * floor: Hedef lokasyonun bulunduğu kat  
+              ## Ã–ZEL LOKASYON Ã–ZELLÄ°KLERÄ° - YENÄ°:
+              - find_special_location fonksiyonunu kullandÄ±ÄŸÄ±nda, dÃ¶nen bilgileri dikkatli oku:
+                * user_floor: KullanÄ±cÄ±nÄ±n bulunduÄŸu kat
+                * floor: Hedef lokasyonun bulunduÄŸu kat  
                 * distance: Toplam mesafe
-              # YENİ: ÖZEL LOKASYON ÖZELLİKLERİ
-              - Kullanıcı özel lokasyonlar istediğinde find_special_location fonksiyonunu kullan:
-                * "Tuvalete gitmek istiyorum" → wc
-                * "Çıkış, normal çıkış kapısı" → exit
-                * "Giriş, normal giriş kapısı" → entrance
-                * "ATM arıyorum" → atm
-                * "Eczane, ilaç" → pharmacy
-                * "Acil çıkış nerede?" → emergency-exit
-                * "Yangın merdiveni" → fire-exit
-                * "Bebek bezini değiştirmem lazım" → baby-care
-                * "İlk yardım" → first-aid
-                * "Bilgi, danışma" → info-desk
-              - Özel lokasyon ararken, eğer QR ile geldiyse 'user_location' parametresini boş bırak, sistem otomatik bulacak.
-              # ÖNEMLİ: ROTA ONAY MEKANİZMASI
-              - Kullanıcı bir mağazaya gitmek istediğinde (örn: "Boyner'e gideceğim", "5m Migrosa gitmek istiyorum", "Boyner'deyim 5 Migros'a gitmek istiyorum"):
-                1. KONUM AYIKLAMA: Eğer kullanıcı "X'deyim Y'ye gitmek istiyorum" şeklinde söylüyorsa:
-                   - X = başlangıç konumu (from)
+              # YENÄ°: Ã–ZEL LOKASYON Ã–ZELLÄ°KLERÄ°
+              - KullanÄ±cÄ± Ã¶zel lokasyonlar istediÄŸinde find_special_location fonksiyonunu kullan:
+                * "Tuvalete gitmek istiyorum" â†’ wc
+                * "Ã‡Ä±kÄ±ÅŸ, normal Ã§Ä±kÄ±ÅŸ kapÄ±sÄ±" â†’ exit
+                * "GiriÅŸ, normal giriÅŸ kapÄ±sÄ±" â†’ entrance
+                * "ATM arÄ±yorum" â†’ atm
+                * "Eczane, ilaÃ§" â†’ pharmacy
+                * "Acil Ã§Ä±kÄ±ÅŸ nerede?" â†’ emergency-exit
+                * "YangÄ±n merdiveni" â†’ fire-exit
+                * "Bebek bezini deÄŸiÅŸtirmem lazÄ±m" â†’ baby-care
+                * "Ä°lk yardÄ±m" â†’ first-aid
+                * "Bilgi, danÄ±ÅŸma" â†’ info-desk
+              - Ã–zel lokasyon ararken, eÄŸer QR ile geldiyse 'user_location' parametresini boÅŸ bÄ±rak, sistem otomatik bulacak.
+              # Ã–NEMLÄ°: ROTA ONAY MEKANÄ°ZMASI
+              - KullanÄ±cÄ± bir maÄŸazaya gitmek istediÄŸinde (Ã¶rn: "Boyner'e gideceÄŸim", "5m Migrosa gitmek istiyorum", "Boyner'deyim 5 Migros'a gitmek istiyorum"):
+                1. KONUM AYIKLAMA: EÄŸer kullanÄ±cÄ± "X'deyim Y'ye gitmek istiyorum" ÅŸeklinde sÃ¶ylÃ¼yorsa:
+                   - X = baÅŸlangÄ±Ã§ konumu (from)
                    - Y = hedef konum (to)
-                   - Örn: "Boyner'deyim 5 Migros'a gitmek istiyorum" → from: "Boyner", to: "5 Migros"
-                2. İLK ADIM: navigate_user fonksiyonunu confirm: false ile çağır (from ve to parametrelerini belirt)
-                3. Kullanıcıya "🗺️ [başlangıç] → [hedef]\n\nBu rotayı oluşturmak istediğinizden emin misiniz?\n\n'Evet' veya 'Hayır' diyebilirsiniz." şeklinde sor
-                4. Kullanıcı "evet", "tamam", "olur", "oluştur" gibi onay verirse: navigate_user fonksiyonunu confirm: true ile TEKRAR çağır
-                5. Kullanıcı "hayır", "iptal" derse: "Rota oluşturma iptal edildi. Başka bir yere gitmek ister misiniz?" de
-              - ASLA direkt rota oluşturma, her zaman önce onay iste!
-              - KONUM AYIKLAMA ÖRNEKLERİ:
-                * "Boyner'deyim 5 Migros'a gitmek istiyorum" → from: "Boyner", to: "5 Migros"
-                * "Starbucks'tayım Teknosa'ya nasıl giderim?" → from: "Starbucks", to: "Teknosa"
-                * "H&M'deyim Koçtaş'a gitmek istiyorum" → from: "H&M", to: "Koçtaş"
-                * "Şu an Migros'tayım, Boyner'e gitmek istiyorum" → from: "Migros", to: "Boyner"
+                   - Ã–rn: "Boyner'deyim 5 Migros'a gitmek istiyorum" â†’ from: "Boyner", to: "5 Migros"
+                2. Ä°LK ADIM: navigate_user fonksiyonunu confirm: false ile Ã§aÄŸÄ±r (from ve to parametrelerini belirt)
+                3. KullanÄ±cÄ±ya "ğŸ—ºï¸ [baÅŸlangÄ±Ã§] â†’ [hedef]\n\nBu rotayÄ± oluÅŸturmak istediÄŸinizden emin misiniz?\n\n'Evet' veya 'HayÄ±r' diyebilirsiniz." ÅŸeklinde sor
+                4. KullanÄ±cÄ± "evet", "tamam", "olur", "oluÅŸtur" gibi onay verirse: navigate_user fonksiyonunu confirm: true ile TEKRAR Ã§aÄŸÄ±r
+                5. KullanÄ±cÄ± "hayÄ±r", "iptal" derse: "Rota oluÅŸturma iptal edildi. BaÅŸka bir yere gitmek ister misiniz?" de
+              - ASLA direkt rota oluÅŸturma, her zaman Ã¶nce onay iste!
+              - KONUM AYIKLAMA Ã–RNEKLERÄ°:
+                * "Boyner'deyim 5 Migros'a gitmek istiyorum" â†’ from: "Boyner", to: "5 Migros"
+                * "Starbucks'tayÄ±m Teknosa'ya nasÄ±l giderim?" â†’ from: "Starbucks", to: "Teknosa"
+                * "H&M'deyim KoÃ§taÅŸ'a gitmek istiyorum" â†’ from: "H&M", to: "KoÃ§taÅŸ"
+                * "Åu an Migros'tayÄ±m, Boyner'e gitmek istiyorum" â†’ from: "Migros", to: "Boyner"
               
-              # ÖNEMLİ KAT BİLGİSİ:
-              - Kullanıcı "indim", "aşağı indim", "alt kata indim" dediğinde change_floor fonksiyonunu "down" parametresiyle çağır.
-              - Kullanıcı "çıktım", "yukarı çıktım", "üst kata çıktım" dediğinde change_floor fonksiyonunu "up" parametresiyle çağır.
-              - Kat değişimi yaptığında kullanıcıya hangi kata geçtiğini söyle.
+              # Ã–NEMLÄ° KAT BÄ°LGÄ°SÄ°:
+              - KullanÄ±cÄ± "indim", "aÅŸaÄŸÄ± indim", "alt kata indim" dediÄŸinde change_floor fonksiyonunu "down" parametresiyle Ã§aÄŸÄ±r.
+              - KullanÄ±cÄ± "Ã§Ä±ktÄ±m", "yukarÄ± Ã§Ä±ktÄ±m", "Ã¼st kata Ã§Ä±ktÄ±m" dediÄŸinde change_floor fonksiyonunu "up" parametresiyle Ã§aÄŸÄ±r.
+              - Kat deÄŸiÅŸimi yaptÄ±ÄŸÄ±nda kullanÄ±cÄ±ya hangi kata geÃ§tiÄŸini sÃ¶yle.
               `,
           },
           {
             role: 'assistant',
             content: hasQRLocation
-              ? `Merhaba! Ankamall'a hoş geldiniz.\n\n📍 ${
-                  isKioskMode ? 'Şu an bu kiosktasınız' : 'Şu an buradasınız'
-                }!\n\nSize mağazalar, etkinlikler veya yol tarifi konusunda nasıl yardımcı olabilirim?`
-              : `Merhaba! Ankamall'a hoş geldiniz.\n\nSize mağazalar, etkinlikler veya yol tarifi konusunda nasıl yardımcı olabilirim?`,
+              ? `Merhaba! Ankamall'a hoÅŸ geldiniz.\n\nğŸ“ ${
+                  isKioskMode ? 'Åu an bu kiosktasÄ±nÄ±z' : 'Åu an buradasÄ±nÄ±z'
+                }!\n\nSize maÄŸazalar, etkinlikler veya yol tarifi konusunda nasÄ±l yardÄ±mcÄ± olabilirim?`
+              : `Merhaba! Ankamall'a hoÅŸ geldiniz.\n\nSize maÄŸazalar, etkinlikler veya yol tarifi konusunda nasÄ±l yardÄ±mcÄ± olabilirim?`,
           },
         ]);
       })
@@ -887,7 +887,7 @@ function MapContent() {
           {
             role: 'assistant',
             content:
-              'Merhaba! Ankamall\'a hoş geldiniz.\n\nSize mağazalar, etkinlikler veya yol tarifi konusunda nasıl yardımcı olabilirim?',
+              'Merhaba! Ankamall\'a hoÅŸ geldiniz.\n\nSize maÄŸazalar, etkinlikler veya yol tarifi konusunda nasÄ±l yardÄ±mcÄ± olabilirim?',
           },
         ]);
       });
@@ -898,9 +898,9 @@ function MapContent() {
       const updatedMessages = [...chatMessages];
       if (updatedMessages[0]?.role === 'system') {
         updatedMessages[0].content = updatedMessages[0].content.replace(
-          /## MEVCUT MAĞAZALAR:.*?(\n\s*\n)/s,
-          `## MEVCUT MAĞAZALAR: Bu Mağazalar şu an bulunan mağazalar. Bunların dışında kesinlikle mağaza ismi verme.
-              Güncel ve anlık veriler bu mağazalar. İsimleri ve kullanıcıları bu mağazalara yönlendir. Bu Mağazalar paylaşılabilir, yönlendirilebilir.
+          /## MEVCUT MAÄAZALAR:.*?(\n\s*\n)/s,
+          `## MEVCUT MAÄAZALAR: Bu MaÄŸazalar ÅŸu an bulunan maÄŸazalar. BunlarÄ±n dÄ±ÅŸÄ±nda kesinlikle maÄŸaza ismi verme.
+              GÃ¼ncel ve anlÄ±k veriler bu maÄŸazalar. Ä°simleri ve kullanÄ±cÄ±larÄ± bu maÄŸazalara yÃ¶nlendir. Bu MaÄŸazalar paylaÅŸÄ±labilir, yÃ¶nlendirilebilir.
               ${storeList.join(', ')}
               `
         );
@@ -1003,7 +1003,7 @@ function MapContent() {
     }
   }, [searchParams, rooms, currentFloor]);
 
-  // Hash kontrolü - Asistan modalını aç
+  // Hash kontrolÃ¼ - Asistan modalÄ±nÄ± aÃ§
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === '#assistant') {
@@ -1055,10 +1055,10 @@ function MapContent() {
       const foundRoom = findRoomByName(searchQuery, rooms);
 
       if (foundRoom) {
-        // Mağazayı seç (bitiş noktası olarak)
+        // MaÄŸazayÄ± seÃ§ (bitiÅŸ noktasÄ± olarak)
         setSelectedEndRoom(foundRoom.id);
 
-        // Haritayı mağazaya odakla
+        // HaritayÄ± maÄŸazaya odakla
         if (mapRef.current && foundRoom.center) {
           mapRef.current.flyTo({
             center: foundRoom.center,
@@ -1067,14 +1067,14 @@ function MapContent() {
           });
         }
 
-        // Katı değiştir
+        // KatÄ± deÄŸiÅŸtir
         if (foundRoom.floor !== currentFloor) {
           setCurrentFloor(foundRoom.floor);
         }
 
-        // Kartı aç
+        // KartÄ± aÃ§
         setIsCardMinimized(false);
-        setActiveNavItem(0); // Rota sekmesine geç
+        setActiveNavItem(0); // Rota sekmesine geÃ§
 
         // URL'den search parametresini temizle
         const newUrl = new URL(window.location.href);
@@ -1190,10 +1190,10 @@ function MapContent() {
   }, [currentFloor]);
 
   useEffect(() => {
-    console.log("💎 Current User Favorites:", userFavorites);
+    console.log("ğŸ’ Current User Favorites:", userFavorites);
   }, [userFavorites]);
 
-  // Kural 1: TEK DOĞRULUK KAYNAĞI (SINGLE SOURCE OF TRUTH)
+  // Kural 1: TEK DOÄRULUK KAYNAÄI (SINGLE SOURCE OF TRUTH)
   const currentExploreStop = useMemo(() => {
     return (exploreWaypoints && exploreWaypoints.length > 0) ? exploreWaypoints[0] : null;
   }, [exploreWaypoints]);
@@ -1206,7 +1206,7 @@ function MapContent() {
       if (cancelled) return;
       const map = mapRef.current;
       
-      // Harita veya katmanlar hazır değilse bekle
+      // Harita veya katmanlar hazÄ±r deÄŸilse bekle
       if (!map || !map.isStyleLoaded() || !map.getLayer('rooms-floor-0')) {
         if (retryCount < 5) {
           timerId = setTimeout(() => applyHighlight(retryCount + 1), 600);
@@ -1214,7 +1214,7 @@ function MapContent() {
         return;
       }
 
-      // Keşfet modunda aktif mağazanın originalId'sini bul
+      // KeÅŸfet modunda aktif maÄŸazanÄ±n originalId'sini bul
       let discoverRoomId = null;
       if (isExploreRouteMode(routeMode) && currentExploreStop?.target) {
         const target = currentExploreStop.target;
@@ -1376,17 +1376,17 @@ function MapContent() {
       currentIndex >= steps.length
     ) {
       console.warn(
-        `⚠️ Invalid skip check: steps.length=${steps?.length}, currentIndex=${currentIndex}`
+        `âš ï¸ Invalid skip check: steps.length=${steps?.length}, currentIndex=${currentIndex}`
       );
       return false;
     }
     const currentStep = steps[currentIndex];
     if (!currentStep) {
-      console.warn(`⚠️ currentStep is undefined at index ${currentIndex}`);
+      console.warn(`âš ï¸ currentStep is undefined at index ${currentIndex}`);
       return false;
     }
     if (!currentStep.hasOwnProperty('distance')) {
-      console.warn(`⚠️ currentStep has no distance property:`, currentStep);
+      console.warn(`âš ï¸ currentStep has no distance property:`, currentStep);
       return false;
     }
     const currentDistance = parseFloat(currentStep.distance) || 0;
@@ -1499,7 +1499,7 @@ function MapContent() {
               '#10B981',
               ['==', ['get', 'id'], roomId],
               '#1B3349',
-              ['==', ['get', 'id'], 'room-101'], // 5M Migros için özel renk
+              ['==', ['get', 'id'], 'room-101'], // 5M Migros iÃ§in Ã¶zel renk
               '#E8E8E8',
               '#eae6d9',
             ]
@@ -1515,7 +1515,7 @@ function MapContent() {
             'case',
             ['==', ['get', 'id'], roomId],
             '#1B3349',
-            ['==', ['get', 'id'], 'room-101'], // 5M Migros için özel renk
+            ['==', ['get', 'id'], 'room-101'], // 5M Migros iÃ§in Ã¶zel renk
             '#E8E8E8',
             '#eae6d9',
           ]
@@ -1544,7 +1544,7 @@ function MapContent() {
         setCampaignRooms(allRooms);
 
       } catch (error) {
-        console.error('❌ Campaign verileri hazırlama hatası:', error);
+        console.error('âŒ Campaign verileri hazÄ±rlama hatasÄ±:', error);
       }
     },
     [allGeoData]
@@ -1578,7 +1578,7 @@ function MapContent() {
       if (dbRoomsByFloor && !dbRoomsByFloor.error && Object.keys(dbRoomsByFloor).length > 0) {
         Object.keys(dbRoomsByFloor).forEach(floor => {
           const dbFloorData = dbRoomsByFloor[floor];
-          // Kat verisinin ve features dizisinin geçerli olduğundan emin ol
+          // Kat verisinin ve features dizisinin geÃ§erli olduÄŸundan emin ol
           if (!dbFloorData || !dbFloorData.features || !Array.isArray(dbFloorData.features)) return;
           
           if (!floorData[floor]) {
@@ -1618,7 +1618,7 @@ function MapContent() {
       loadCampaignRooms(floorData);
       return floorData;
     } catch (error) {
-      console.error('❌ Kat yükleme hatası:', error);
+      console.error('âŒ Kat yÃ¼kleme hatasÄ±:', error);
       setAllGeoData({});
       return {};
     }
@@ -1682,7 +1682,7 @@ function MapContent() {
               map.setPaintProperty(layer.id, 'background-color', '#FFFFFF');
               map.setPaintProperty(layer.id, 'background-opacity', 0);
             } else if (layer.type === 'fill-extrusion') {
-              // Building katmanları - şeffaf
+              // Building katmanlarÄ± - ÅŸeffaf
               map.setPaintProperty(layer.id, 'fill-extrusion-opacity', 0);
             } else if (layer.type === 'fill') {
               map.setPaintProperty(layer.id, 'fill-opacity', 0);
@@ -1709,7 +1709,7 @@ function MapContent() {
       const mallMarkerImg = new Image(40, 40);
       mallMarkerImg.onload = () => map.addImage('mall-marker', mallMarkerImg);
       mallMarkerImg.src =
-        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3C!-- Dış çember (glow efekti) --%3E%3Ccircle cx='50' cy='50' r='45' fill='rgba(255, 107, 107, 0.2)' stroke='rgba(255, 107, 107, 0.4)' stroke-width='2'%3E%3Canimate attributeName='r' from='40' to='45' dur='2s' repeatCount='indefinite'/%3E%3Canimate attributeName='opacity' from='0.8' to='0.3' dur='2s' repeatCount='indefinite'/%3E%3C/circle%3E%3C!-- Ana marker çemberi --%3E%3Ccircle cx='50' cy='50' r='35' fill='%23FF6B6B' stroke='white' stroke-width='4'/%3E%3C!-- Mall ikonu --%3E%3Cpath d='M25 35h50v30H25z' fill='white'/%3E%3Cpath d='M20 30h60l-5-10H25z' fill='white'/%3E%3Crect x='30' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3Crect x='42' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3Crect x='54' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3Crect x='66' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3C!-- 'M' harfi --%3E%3Ctext x='50' y='75' text-anchor='middle' font-family='Arial, sans-serif' font-size='12' font-weight='bold' fill='white'%3EM%3C/text%3E%3C/svg%3E";
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3C!-- DÄ±ÅŸ Ã§ember (glow efekti) --%3E%3Ccircle cx='50' cy='50' r='45' fill='rgba(255, 107, 107, 0.2)' stroke='rgba(255, 107, 107, 0.4)' stroke-width='2'%3E%3Canimate attributeName='r' from='40' to='45' dur='2s' repeatCount='indefinite'/%3E%3Canimate attributeName='opacity' from='0.8' to='0.3' dur='2s' repeatCount='indefinite'/%3E%3C/circle%3E%3C!-- Ana marker Ã§emberi --%3E%3Ccircle cx='50' cy='50' r='35' fill='%23FF6B6B' stroke='white' stroke-width='4'/%3E%3C!-- Mall ikonu --%3E%3Cpath d='M25 35h50v30H25z' fill='white'/%3E%3Cpath d='M20 30h60l-5-10H25z' fill='white'/%3E%3Crect x='30' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3Crect x='42' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3Crect x='54' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3Crect x='66' y='40' width='8' height='15' fill='%23FF6B6B'/%3E%3C!-- 'M' harfi --%3E%3Ctext x='50' y='75' text-anchor='middle' font-family='Arial, sans-serif' font-size='12' font-weight='bold' fill='white'%3EM%3C/text%3E%3C/svg%3E";
       map.addSource('mall-location', {
         type: 'geojson',
         data: {
@@ -1720,7 +1720,7 @@ function MapContent() {
           },
           properties: {
             name: 'Mall of Ankara',
-            description: 'Ankamall - Alışveriş Merkezi',
+            description: 'Ankamall - AlÄ±ÅŸveriÅŸ Merkezi',
           },
         },
       });
@@ -1834,14 +1834,14 @@ function MapContent() {
                 const logoId = `logo-${props.id}`;
 
                 const logoPromise = new Promise(resolve => {
-                  // Logo zaten yüklüyse atla
+                  // Logo zaten yÃ¼klÃ¼yse atla
                   try {
                     if (map.hasImage(logoId)) {
                       resolve(true);
                       return;
                     }
                   } catch (e) {
-                    // hasImage mevcut değilse devam et
+                    // hasImage mevcut deÄŸilse devam et
                   }
 
                   try {
@@ -2254,11 +2254,11 @@ function MapContent() {
       return;
     }
 
-    // Safari için hemen çiz, timeout'u kaldır
+    // Safari iÃ§in hemen Ã§iz, timeout'u kaldÄ±r
     if (map.isStyleLoaded()) {
       drawPathSafely(coords);
     } else {
-      // Stil yüklenmemişse kısa bir timeout
+      // Stil yÃ¼klenmemiÅŸse kÄ±sa bir timeout
       const timeoutId = setTimeout(() => {
         drawPathSafely(coords);
       }, 50);
@@ -2268,22 +2268,22 @@ function MapContent() {
     }
   }, [currentFloor, routeByFloor]);
 
-  // Harita Görünümü (2D/3D) Değişikliği
+  // Harita GÃ¶rÃ¼nÃ¼mÃ¼ (2D/3D) DeÄŸiÅŸikliÄŸi
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    // Mağazalar için yükseklik ayarı
+    // MaÄŸazalar iÃ§in yÃ¼kseklik ayarÄ±
     if (map.getLayer('nav-fill')) {
       map.setPaintProperty('nav-fill', 'fill-extrusion-height', mapView === '2D' ? 0 : 1.5);
     }
 
-    // Yapılar için yükseklik ayarı
+    // YapÄ±lar iÃ§in yÃ¼kseklik ayarÄ±
     if (map.getLayer('nav-non-walkable-areas')) {
       map.setPaintProperty('nav-non-walkable-areas', 'fill-extrusion-height', mapView === '2D' ? 0 : 1.2);
     }
 
-    // Vurgu için yükseklik ayarı
+    // Vurgu iÃ§in yÃ¼kseklik ayarÄ±
     if (map.getLayer('nav-highlight')) {
       map.setPaintProperty('nav-highlight', 'fill-extrusion-height', mapView === '2D' ? 0 : 1.51);
     }
@@ -2300,7 +2300,7 @@ function MapContent() {
     try {
       const token = localStorage.getItem('user_token');
       if (token) {
-        // Rotayı kaydet
+        // RotayÄ± kaydet
         await fetch('/api/user/routes', {
           method: 'POST',
           headers: {
@@ -2315,33 +2315,73 @@ function MapContent() {
             date: new Date().toISOString()
           })
         });
+        // Favoriyi kullanildi olarak isaretle (favori ogesi bazli)
+        const wt = waypoint.target || {};
+        const normalizeId = v => (v ? String(v).toLowerCase() : '');
 
-        // Favoriyi faydalanıldı olarak işaretle - birden fazla ID ile dene
-        const targetId = waypoint.target.id || waypoint.target.room_id || '';
-        const targetRoomId = waypoint.target.room_id || waypoint.target.id || '';
-        
-        // Kampanya olarak işaretle
-        const favoriteResponse = await fetch('/api/favorites', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            id: targetId,
-            room_id: targetRoomId,
-            storeName: waypoint.target.name,
-            type: 'campaign'
-          })
-        });
-        const favoriteData = await favoriteResponse.json();
-        if (favoriteData.success) {
-          setUserFavorites(prev => ({
-            ...(prev || {}),
-            favorites: favoriteData.favorites || prev?.favorites || [],
-            campaigns: favoriteData.campaigns || prev?.campaigns || [],
-            products: favoriteData.products || prev?.products || []
-          }));
+        const declaredType = wt.favorite_source_type;
+        const inferredType =
+          declaredType ||
+          (wt.favorite_campaign_id ? 'campaign' : wt.favorite_product_id ? 'product' : 'campaign');
+
+        const roomCandidates = [wt.room_id, wt.id, wt.favorite_store_id].filter(Boolean).map(String);
+        const nameCandidate = normalizeId(wt.name);
+
+        const pickFavoriteId = (type) => {
+          const favs = userFavorites || {};
+          if (type === 'product') {
+            const direct = wt.favorite_product_id || wt.productId || wt.storeId || '';
+            if (direct) return String(direct);
+            const list = favs.products || [];
+            const found = list.find(f => {
+              const rid = normalizeId((f.roomData && (f.roomData.room_id || f.roomData.id)) || (f.productData && f.productData.storeId));
+              const sname = normalizeId(f.storeName);
+              if (rid && roomCandidates.some(c => normalizeId(c) === rid)) return true;
+              if (sname && nameCandidate && sname === nameCandidate) return true;
+              return false;
+            });
+            return found ? String(found.productId || found.storeId || found.id || '') : '';
+          }
+          const direct = wt.favorite_campaign_id || wt.campaignId || wt.storeId || '';
+          if (direct) return String(direct);
+          const list = favs.campaigns || [];
+          const found = list.find(f => {
+            const rid = normalizeId(f.roomData && (f.roomData.room_id || f.roomData.id));
+            const sname = normalizeId(f.storeName);
+            if (rid && roomCandidates.some(c => normalizeId(c) === rid)) return true;
+            if (sname && nameCandidate && sname === nameCandidate) return true;
+            return false;
+          });
+          return found ? String(found.campaignId || found.storeId || found.id || '') : '';
+        };
+
+        const targetType = inferredType;
+        const targetId = pickFavoriteId(targetType);
+        const targetRoomId = wt.room_id || wt.id || '';
+
+        if ((targetType === 'campaign' || targetType === 'product') && targetId) {
+          const favoriteResponse = await fetch('/api/favorites', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              id: targetId,
+              room_id: targetRoomId,
+              storeName: wt.name,
+              type: targetType
+            })
+          });
+          const favoriteData = await favoriteResponse.json().catch(() => null);
+          if (favoriteResponse.ok && favoriteData && favoriteData.success) {
+            setUserFavorites(prev => ({
+              ...(prev || {}),
+              favorites: favoriteData.favorites || prev?.favorites || [],
+              campaigns: favoriteData.campaigns || prev?.campaigns || [],
+              products: favoriteData.products || prev?.products || []
+            }));
+          }
         }
       }
     } catch (e) {
@@ -2349,7 +2389,7 @@ function MapContent() {
       return false;
     }
     
-    // Ziyaret ettikten sonra rotadan çıkar
+    // Ziyaret ettikten sonra rotadan Ã§Ä±kar
     const newSkipped = [...skippedWaypoints, waypoint.target.id, waypoint.target.room_id];
     setSkippedWaypoints(newSkipped);
     return true;
@@ -2403,7 +2443,7 @@ function MapContent() {
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
-          <p className="text-gray-600">Harita yükleniyor...</p>
+          <p className="text-gray-600">Harita yÃ¼kleniyor...</p>
         </div>
       </div>
     );
@@ -2417,7 +2457,7 @@ function MapContent() {
         setIsSidebarOpen={setIsSidebarOpen}
         setIsAssistantOpen={setIsAssistantOpen}
       />
-      {/* YENİ: Harita + Chat Wrapper */}
+      {/* YENÄ°: Harita + Chat Wrapper */}
       <div className="flex-1 flex flex-col relative z-10">
         <MapHeader
           searchQuery={searchQuery}
@@ -2439,7 +2479,7 @@ function MapContent() {
           style={{ backgroundColor: 'transparent' }}
         >
           {/* Kart - Always show when card is not minimized - Kiosk modda gizle */}
-          {/* Oda kartı - sadece içerik varsa göster */}
+          {/* Oda kartÄ± - sadece iÃ§erik varsa gÃ¶ster */}
           <Suspense fallback={null}>
             <CampaignWaypointCard
               waypoint={currentExploreStop}
@@ -2514,7 +2554,7 @@ function MapContent() {
                     fontSize="13"
                     fontWeight="bold"
                   >
-                    Haritadan Tıklayın
+                    Haritadan TÄ±klayÄ±n
                   </text>
                   <text
                     x="76"
@@ -2523,10 +2563,10 @@ function MapContent() {
                     fillOpacity="0.61"
                     fontSize="10"
                   >
-                    Konumunuzu seçin
+                    Konumunuzu seÃ§in
                   </text>
 
-                  {/* X Butonu SVG içinde */}
+                  {/* X Butonu SVG iÃ§inde */}
                   <text
                     x="220"
                     y="42.5"
@@ -2546,7 +2586,7 @@ function MapContent() {
                       setIsCardMinimized(true);
                     }}
                   >
-                    ✕
+                    âœ•
                   </text>
 
                   <defs>
@@ -2576,7 +2616,7 @@ function MapContent() {
               </div>
             </div>
           )}
-          {/* Desktop Bilgi Kartları - GİZLENDİ */}
+          {/* Desktop Bilgi KartlarÄ± - GÄ°ZLENDÄ° */}
           {routeSteps.length > 0 ? (
             <div className="hidden absolute bottom-4 left-24 max-w-sm min-w-[380px] z-30">
               <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-4 min-h-[190px]">
@@ -2594,7 +2634,7 @@ function MapContent() {
                     <div>
                       <h2 className="text-lg font-bold text-gray-800">
                         {rooms.find(r => r.id === selectedEndRoom)?.name ||
-                          'Seçili Oda'}
+                          'SeÃ§ili Oda'}
                       </h2>
                       {rooms.find(r => r.id === selectedEndRoom)?.category &&
                         rooms.find(r => r.id === selectedEndRoom)?.category !==
@@ -2614,10 +2654,10 @@ function MapContent() {
                     className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all"
                   >
                     <X className="w-4 h-4" />
-                    Rotayı Kapat
+                    RotayÄ± Kapat
                   </button>
                 </div>
-                {/* Rota Özet Bilgileri */}
+                {/* Rota Ã–zet Bilgileri */}
                 <div className="flex items-center justify-between text-sm mb-3">
                   <span>{Math.ceil(totalDistance / 80)} min</span>
                   <span>{Math.round(totalDistance)} m</span>
@@ -2630,15 +2670,15 @@ function MapContent() {
                     })}
                   </span>
                 </div>
-                {/* Yönlendirme mesajı */}
+                {/* YÃ¶nlendirme mesajÄ± */}
                 <div className="mb-3 p-3 bg-brand-light rounded-lg border-l-4 border-brand">
-                  {/* Üst kısım: Yönlendirme mesajı */}
+                  {/* Ãœst kÄ±sÄ±m: YÃ¶nlendirme mesajÄ± */}
                   <div className="flex items-center gap-2 mb-2">
                     <div className="text-brand-darkest text-sm font-medium flex-1">
                       {getInstruction()}
                     </div>
                   </div>
-                  {/* Alt kısım: İleri/Geri butonları - sadece çok katlı rotalarda */}
+                  {/* Alt kÄ±sÄ±m: Ä°leri/Geri butonlarÄ± - sadece Ã§ok katlÄ± rotalarda */}
                   {Object.keys(routeByFloor).length > 1 && (
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-600">
@@ -2698,7 +2738,7 @@ function MapContent() {
                         >
                           Geri
                         </button>
-                        {/* İleri butonu */}
+                        {/* Ä°leri butonu */}
                         <button
                           onClick={handleNextFloor}
                           disabled={(() => {
@@ -2735,7 +2775,7 @@ function MapContent() {
                               : 'bg-gradient-to-r from-brand to-brand-dark hover:from-brand-dark hover:to-brand-darkest'
                           }`}
                         >
-                          İlerle
+                          Ä°lerle
                         </button>
                       </div>
                     </div>
@@ -2772,7 +2812,7 @@ function MapContent() {
                       <div>
                         <h2 className="text-base font-bold text-gray-800">
                           {rooms.find(r => r.id === selectedEndRoom)?.name ||
-                            'Seçili Oda'}
+                            'SeÃ§ili Oda'}
                         </h2>
                         <p className="text-xs text-gray-500">
                           Kat{' '}
@@ -2789,7 +2829,7 @@ function MapContent() {
                       }}
                       className="text-gray-400 hover:text-gray-600 text-xl"
                     >
-                      ✕
+                      âœ•
                     </button>
                   </div>
                   {/* Store Info */}
@@ -2801,11 +2841,11 @@ function MapContent() {
                         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-2.5">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-xs font-semibold text-gray-800">
-                              Mağaza Değerlendirmesi
+                              MaÄŸaza DeÄŸerlendirmesi
                             </h4>
                             {!isAuthenticated && (
                               <span className="text-xs text-gray-500">
-                                Giriş yapın
+                                GiriÅŸ yapÄ±n
                               </span>
                             )}
                           </div>
@@ -2816,7 +2856,7 @@ function MapContent() {
                               userName={
                                 user?.name ||
                                 user?.username ||
-                                'Anonim Kullanıcı'
+                                'Anonim KullanÄ±cÄ±'
                               }
                               showReviews={false}
                               onRatingChange={(rating, avgRating, count) => {
@@ -2964,7 +3004,7 @@ function MapContent() {
                     className="w-full py-2.5 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-white font-semibold text-sm hover:from-brand-dark hover:to-brand-darkest transition-all shadow-md hover:shadow-lg"
                   >
                     {isSelectingStartRoom
-                      ? 'Konumunuzu Seçin'
+                      ? 'Konumunuzu SeÃ§in'
                       : 'Yol Tarifi Al'}
                   </button>
                 </div>
@@ -2990,16 +3030,16 @@ function MapContent() {
                     </svg>
                   </div>
                   <p className="text-sm text-gray-500 mb-1">
-                    Henüz bir oda seçilmedi
+                    HenÃ¼z bir oda seÃ§ilmedi
                   </p>
                   <p className="text-xs text-gray-400">
-                    Yukarıdaki arama kısmından oda seçebilirsiniz
+                    YukarÄ±daki arama kÄ±smÄ±ndan oda seÃ§ebilirsiniz
                   </p>
                 </div>
               </div>
             </div>
           )}
-          {/* Google Maps tarzı arama çubuğu - Harita üzerinde - Keşfet açılınca arka planda kalır */}
+          {/* Google Maps tarzÄ± arama Ã§ubuÄŸu - Harita Ã¼zerinde - KeÅŸfet aÃ§Ä±lÄ±nca arka planda kalÄ±r */}
           <div className={(!showStoreRating) ? "contents" : "hidden"}>
             <MapHeaderControls
               isDiscoverOpen={isDiscoverOpen}
@@ -3044,14 +3084,14 @@ function MapContent() {
               onMenuToggle={isOpen => {
                 if (isOpen) {
                   setIsCardMinimized(true);
-                  // Ayrıca seçim modundaysa kapat
+                  // AyrÄ±ca seÃ§im modundaysa kapat
                   setIsSelectingStartRoom(false);
                 }
               }}
             />
           )}
         </div>
-        {/* Assistant FAB - Kaldırıldı */}
+        {/* Assistant FAB - KaldÄ±rÄ±ldÄ± */}
         {/* QR Kod Popup */}
         {showQrPopup &&
           qrHighlightedRoom &&
@@ -3061,7 +3101,7 @@ function MapContent() {
               onClose={() => setShowQrPopup(false)}
             />
           )}
-        {/* Keşfet Modal */}
+        {/* KeÅŸfet Modal */}
         <DiscoverModal
           isOpen={isDiscoverOpen}
           onClose={() => {
@@ -3122,7 +3162,7 @@ function MapContent() {
         isOpen={isAssistantOpen}
         onClose={() => {
           setIsAssistantOpen(false);
-          // Diğer menüleri de kapat
+          // DiÄŸer menÃ¼leri de kapat
           setShowSearchDropdown(false);
           setShowStartDropdown(false);
           setShowEndDropdown(false);
@@ -3156,14 +3196,14 @@ function MapContent() {
           setSelectedStoreForRating(null);
         }}
         onNavigate={store => {
-          // Mağazayı hedef olarak seç
+          // MaÄŸazayÄ± hedef olarak seÃ§
           setSelectedEndRoom(store.id);
           setEndQuery(store.name);
 
-          // QR koordinatı varsa otomatik olarak başlangıç noktası olarak kullan
+          // QR koordinatÄ± varsa otomatik olarak baÅŸlangÄ±Ã§ noktasÄ± olarak kullan
           let coordinateRoom = rooms.find(r => r.isCoordinate);
 
-          // Koordinat odası yoksa ama URL'de koordinat varsa, tekrar oluştur
+          // Koordinat odasÄ± yoksa ama URL'de koordinat varsa, tekrar oluÅŸtur
           if (!coordinateRoom) {
             const lat = searchParams.get('lat');
             const lng = searchParams.get('lng');
@@ -3178,8 +3218,8 @@ function MapContent() {
               coordinateRoom = {
                 id: `coordinate-${Date.now()}`,
                 name: isKioskMode
-                  ? '📍 Şu an bu kiosktasınız'
-                  : '📍 Şu an buradasınız',
+                  ? 'ğŸ“ Åu an bu kiosktasÄ±nÄ±z'
+                  : 'ğŸ“ Åu an buradasÄ±nÄ±z',
                 floor: targetFloor,
                 coordinates: coordinates,
                 center: coordinates,
@@ -3203,7 +3243,7 @@ function MapContent() {
             setIsSelectingStartRoom(false);
           } else {
 
-            // Başlangıç noktası seçme modunu aç
+            // BaÅŸlangÄ±Ã§ noktasÄ± seÃ§me modunu aÃ§
             setIsSelectingStartRoom(true);
             setSelectedStartRoom('');
             setStartQuery('');
@@ -3226,7 +3266,7 @@ function MapContent() {
         onConfirm={handleLocationClose}
       />
 
-      {/* Hızlı Mağaza Bilgi Paneli */}
+      {/* HÄ±zlÄ± MaÄŸaza Bilgi Paneli */}
       {showQuickStoreInfo && selectedQuickStore && (
         <StoreQuickInfoPanel
           store={selectedQuickStore}
@@ -3237,13 +3277,13 @@ function MapContent() {
             setIsFavorite(false);
           }}
           onDetailsClick={() => {
-            // Detaylı paneli aç
+            // DetaylÄ± paneli aÃ§
             setShowQuickStoreInfo(false);
             setSelectedStoreForRating(selectedQuickStore);
             setShowStoreRating(true);
           }}
           onRouteClick={() => {
-            // Yol tarifi için başlangıç noktası seçme modunu aç
+            // Yol tarifi iÃ§in baÅŸlangÄ±Ã§ noktasÄ± seÃ§me modunu aÃ§
             setShowQuickStoreInfo(false);
             setIsSelectingStartRoom(true);
             setSelectedStartRoom('');
@@ -3265,3 +3305,4 @@ export default function MapLibreMap() {
     </Suspense>
   );
 }
+

@@ -1,17 +1,6 @@
 import { useCallback } from 'react';
 
 export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
-  const runWhenStyleReady = (map, callback) => {
-    if (!map) return;
-    if (map.isStyleLoaded()) {
-      callback();
-      return;
-    }
-    map.once('styledata', () => {
-      if (map.isStyleLoaded()) callback();
-    });
-  };
-
   const calculateBearing = useCallback((lat1, lon1, lat2, lon2) => {
     const phi1 = (lat1 * Math.PI) / 180;
     const phi2 = (lat2 * Math.PI) / 180;
@@ -26,19 +15,24 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
 
   const drawPathSafely = useCallback(
     coords => {
-      const map = mapRef.current;
-      if (!map) return;
+      const mapNow = mapRef.current;
+      if (!mapNow) return;
+
+      if (!mapNow.isStyleLoaded()) {
+        setTimeout(() => drawPathSafely(coords), 50);
+        return;
+      }
 
       if (!coords || coords.length === 0) {
         try {
-          if (map.getSource('path')) {
-            map.getSource('path').setData({
+          if (mapNow.getSource('path')) {
+            mapNow.getSource('path').setData({
               type: 'Feature',
               geometry: { type: 'LineString', coordinates: [] },
             });
           }
-          if (map.getSource('path-arrows')) {
-            map.getSource('path-arrows').setData({
+          if (mapNow.getSource('path-arrows')) {
+            mapNow.getSource('path-arrows').setData({
               type: 'FeatureCollection',
               features: [],
             });
@@ -49,9 +43,11 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
         return;
       }
 
-      runWhenStyleReady(map, () => {
+      try {
+        // Map instance may be removed/recreated during navigation; do not hold stale references across frames.
         requestAnimationFrame(() => {
-          if (!map.isStyleLoaded()) return;
+          const map = mapRef.current;
+          if (!map || !map.isStyleLoaded()) return;
 
           const geo = {
             type: 'Feature',
@@ -74,7 +70,8 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
           }
 
           requestAnimationFrame(() => {
-            if (!map.isStyleLoaded()) return;
+            const map2 = mapRef.current;
+            if (!map2 || !map2.isStyleLoaded()) return;
 
             if (coords.length > 1) {
               const arrowPoints = [];
@@ -99,14 +96,14 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
                 features: arrowPoints,
               };
 
-              if (map.getSource('path-arrows')) {
-                map.getSource('path-arrows').setData(arrowGeo);
+              if (map2.getSource('path-arrows')) {
+                map2.getSource('path-arrows').setData(arrowGeo);
               } else {
-                map.addSource('path-arrows', {
+                map2.addSource('path-arrows', {
                   type: 'geojson',
                   data: arrowGeo,
                 });
-                map.addLayer({
+                map2.addLayer({
                   id: 'path-arrows',
                   type: 'symbol',
                   source: 'path-arrows',
@@ -121,25 +118,28 @@ export const usePathDrawing = ({ mapRef, fitMapToPath }) => {
                   },
                 });
               }
-            } else if (map.getSource('path-arrows')) {
-              map.getSource('path-arrows').setData({
+            } else if (map2.getSource('path-arrows')) {
+              map2.getSource('path-arrows').setData({
                 type: 'FeatureCollection',
                 features: [],
               });
             }
 
-            if (map.getLayer('animation-icon-layer')) {
-              map.moveLayer('animation-icon-layer');
+            if (map2.getLayer('animation-icon-layer')) {
+              map2.moveLayer('animation-icon-layer');
             }
-            if (coords.length > 1) {
+            if (coords && coords.length > 1) {
               fitMapToPath(mapRef.current, coords);
             }
           });
         });
-      });
+      } catch (error) {
+        console.error('Path drawing error:', error);
+      }
     },
     [fitMapToPath, calculateBearing, mapRef]
   );
 
   return { drawPathSafely, calculateBearing };
 };
+
